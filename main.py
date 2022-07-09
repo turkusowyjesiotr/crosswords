@@ -52,7 +52,7 @@ for k in sorted(word_list, key=len, reverse=True):
 
 
 class Box:
-    def __init__(self, x, y, size, text='', is_dead=False):
+    def __init__(self, x, y, size, row, column, text='', is_dead=False):
         self.rect = pg.Rect(x, y, size, size)
         self.text = text
         self.color = white
@@ -66,19 +66,38 @@ class Box:
         self.number_surface = NUMBER_FONT.render(self.number, True, black)
         self.active = False
         self.is_dead = is_dead
+        self.row = row
+        self.column = column
 
     def handle_event(self, event):
+        if event.type == pg.MOUSEBUTTONDOWN and event.button == 3:
+            if self.rect.collidepoint(event.pos):
+                if self.is_dead is False:
+                    self.is_dead = True
+                else:
+                    self.is_dead = False
         if self.is_dead is not True:
-            if event.type == pg.MOUSEBUTTONDOWN:
+            if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                 if self.rect.collidepoint(event.pos):
                     self.active = not self.active
                 else:
                     self.active = False
                 self.color = blue if self.active else white
-
             if event.type == pg.KEYDOWN:
+                not_active = [pg.K_RALT, pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_BACKSPACE, pg.K_RETURN,
+                              pg.K_UP, pg.K_LALT, pg.K_LCTRL, pg.K_RCTRL, pg.K_RSHIFT, pg.K_LSHIFT, pg.K_SPACE]
                 if self.active:
-                    if event.key != pg.K_BACKSPACE and len(self.text) <= 1:
+                    if event.key == pg.K_RIGHT:
+                        length = random.randint(3,10)
+                        word = get_word_from_letter(self.row, self.column, length)
+                        if is_empty(input_boxes, self.row, self.column, word, False):
+                            place_word(input_boxes, self.row, self.column, word, False)
+                    elif event.key == pg.K_DOWN:
+                        length = random.randint(3,10)
+                        word = get_word_from_letter(self.row, self.column, length)
+                        if is_empty(input_boxes, self.row, self.column, word, True):
+                            place_word(input_boxes, self.row, self.column, word, True)
+                    elif event.key not in not_active and len(self.text) <= 1:
                         self.text = event.unicode
                         self.active = False
                         self.color = white
@@ -122,7 +141,7 @@ def draw_grid_exp(rows, cols):
     for row in range(rows):
         column = []
         for col in range(cols):
-            column.append(Box(x, y, block_size))
+            column.append(Box(x, y, block_size, row, col))
             x += 39
         input_boxes.append(column)
         x = 15
@@ -130,50 +149,54 @@ def draw_grid_exp(rows, cols):
 
 
 def place_word(array, row, col, word, is_vertical):
-    word = word.upper()
-    i_count = 0
-    if is_vertical is False:
-        for i in range(len(word)):
-            array[row][col + i].add_text(word[i])
-            i_count += 1
-        array[row][col + i_count].is_dead = True
+    if word is not None:
+        word = word.upper()
+        i_count = 0
+        if is_vertical is False:
+            for i in range(len(word)):
+                array[row][col + i].add_text(word[i])
+                i_count += 1
+            array[row][col + i_count].is_dead = True
 
-    else:
-        for i in range(len(word)):
-            array[row + i][col].add_text(word[i])
-            i_count += 1
-        array[row + i_count][col].is_dead = True
+        else:
+            for i in range(len(word)):
+                array[row + i][col].add_text(word[i])
+                i_count += 1
+            array[row + i_count][col].is_dead = True
+    if word is None:
+        print('NoneObject passed')
 #TODO: rozpisać sobie na kartce logikę is_empty, żeby sprawdzało czy po kolejnym boxie po słowie jest is_dead (jeśli tak, to umieść słowo)
 # i żeby sprawdzało czy po bokach słowa nie ma innych słów
 # i perhaps czy są jakieś przecinające się słówka
 def is_empty(array, row, col, word, is_vertical: bool):
-    length = len(word)
-    empty_boxes = 1
-    if not is_vertical and col + length > len(array[row]):
-        return False
+    if word is not None:
+        length = len(word)
+        empty_boxes = 1
+        if not is_vertical and col + length > len(array[row]):
+            return False
 
-    if is_vertical and row + length > len(array):
-        return False
+        if is_vertical and row + length > len(array):
+            return False
 
-    else:
-        if is_vertical:
-            for i in range(length):
-                if array[row + 1][col].text == '' and array[row + 1][col].is_dead is False:
-                    empty_boxes += 1
-                    row += 1
-                    if empty_boxes == length:
-                        return True
-                else:
-                    return False
-        if not is_vertical:
-            for i in range(length):
-                if array[row][col + 1].text == '' and array[row][col + 1].is_dead is False:
-                    empty_boxes += 1
-                    col += 1
-                    if empty_boxes == length:
-                        return True
-                else:
-                    return False
+        else:
+            if is_vertical:
+                for i in range(length):
+                    if array[row + 1][col].text == '' and array[row + 1][col].is_dead is False:
+                        empty_boxes += 1
+                        row += 1
+                        if empty_boxes == length:
+                            return True
+                    else:
+                        return False
+            if not is_vertical:
+                for i in range(length):
+                    if array[row][col + 1].text == '' and array[row][col + 1].is_dead is False:
+                        empty_boxes += 1
+                        col += 1
+                        if empty_boxes == length:
+                            return True
+                    else:
+                        return False
 definitions = []
 
 # fill the grid rec
@@ -235,8 +258,12 @@ def get_word(array, length):
             return word
 
 
+
 def get_word_from_letter(row, column, length):
     letter = input_boxes[row][column].text
+    special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
+    if letter in special_chars:
+        return None
     if letter == 'A':
         return get_word(words_a, length)
     if letter == 'B':
@@ -367,3 +394,6 @@ if __name__ == '__main__':
     main()
     pg.quit()
 
+#TODO: dodać przycisk do debug mode, który będzie włączał dodawanie słów strzałkami
+#TODO: dodać przyciski do robienia różnych rodzajów krzyżówek
+#TODO: scraping definicji słów
