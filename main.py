@@ -62,6 +62,7 @@ class Button:
         self.displacement = displacement
         self.elevation = displacement
         self.bottom_rect = pg.Rect(x, y, width, height)
+        self.false_rect = pg.Rect(x, y, width, 5)
         self.text = text
         self.text_surface = FONT.render(text, True, black)
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
@@ -78,14 +79,12 @@ class Button:
 
     def button_event(self):
         mouse_pos = pg.mouse.get_pos()
-        if self.bottom_rect.collidepoint(mouse_pos):
-            # self.color = dark_grey_2
-            # self.draw()
+        if self.rect.collidepoint(mouse_pos):
+            self.color = dark_grey_2
             if pg.mouse.get_pressed()[0]:
                 self.rect.y = self.bottom_rect.y
-                # self.bottom
+                pg.draw.rect(screen, pink, self.false_rect)
                 self.update_text()
-                pg.display.flip()
             else:
                 self.rect.y = self.original
                 self.update_text()
@@ -93,12 +92,11 @@ class Button:
             self.rect.y = self.original
             self.update_text()
             self.color = grey
-            # self.draw()
 
     def draw(self):
         self.bottom_rect.y = self.original + self.elevation
         # self.bottom_rect.height = self.rect.height + self.elevation
-        # pg.draw.rect(screen, self.bottom_color, self.bottom_rect)
+        pg.draw.rect(screen, self.bottom_color, self.bottom_rect)
         pg.draw.rect(screen, self.color, self.rect)
         pg.draw.rect(screen, self.border_color, self.rect, 2)
         screen.blit(self.text_surface, self.text_rect)
@@ -373,18 +371,18 @@ def fill_the_grid():
     place_word(input_boxes, 0, 6, get_word_from_letter(0, 6, 10), True)
     place_word(input_boxes, 8, 6, get_word_from_letter(8, 6, 7), False)
 
-
+button0 = Button(125, 810, 150, 75, 4, 'Sraka', 0)
+button1 = Button(325, 810, 150, 75, 4, 'Sraka', 1)
+button2 = Button(525, 810, 150, 75, 4, 'Sraka', 2)
+def draw_buttons():
+    for b in buttons:
+        b.draw()
 def main():
     clock = pg.time.Clock()
     # draw_grid_exp(25,25)
     draw_grid_exp(20, 20)
-    button0 = Button(125, 810, 150, 75, 4, 'Sraka', 0)
-    button1 = Button(325, 810, 150, 75, 4, 'Sraka', 1)
-    button2 = Button(525, 810, 150, 75, 4, 'Sraka', 2)
-    def draw_buttons():
-        for b in buttons:
-            b.draw()
     draw_buttons()
+
     # fill_the_grid_exp(word_list_sorted)
     # place_word(0, 0, 'LIME', True)
     # print(is_empty(0, 0, 'LIP', True))
@@ -441,7 +439,6 @@ def main():
                 b.button_event()
                 b.draw()
 
-        # draw_buttons()
         for i in range(len(input_boxes)): # good 2d version
             for box in input_boxes[i]:
                 box.draw()
@@ -451,7 +448,7 @@ def main():
         # for box in input_boxes: # numpy version
         #     box.draw(screen)
 
-        pg.display.update()
+        pg.display.flip()
         clock.tick(30)
 
 
