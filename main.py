@@ -1,5 +1,7 @@
 import pygame as pg
-from word_scraping import words_a, words_b, words_c, words_d, words_e, words_f, words_g, words_h, words_i, words_j, words_k, words_l, words_m, words_n, words_o, words_p, words_r, words_s, words_t, words_u, words_w, words_z
+from word_scraping import words_a, words_b, words_c, words_d, words_e, words_f, words_g, words_h, words_i, words_j, \
+    words_k, words_l, words_m, words_n, words_o, words_p, words_r, words_s, words_t, words_u, words_w, words_z, \
+    words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl
 import random
 import string
 
