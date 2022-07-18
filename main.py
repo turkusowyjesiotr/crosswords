@@ -1,7 +1,8 @@
 import pygame as pg
 from word_scraping import words_a, words_b, words_c, words_d, words_e, words_f, words_g, words_h, words_i, words_j, \
     words_k, words_l, words_m, words_n, words_o, words_p, words_r, words_s, words_t, words_u, words_w, words_z, \
-    words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl
+    words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl, words_with_aen, words_a_pl, words_e_pl, \
+    words_n_pl
 import random
 import string
 
@@ -21,13 +22,15 @@ dark_grey_2 = pg.Color(170, 170, 170)
 gold = pg.Color(235, 198, 52)
 screen.fill(pink)
 block_size = 40
-# screen.blit(background, (0, 0))
-FONT = pg.font.Font('C:/Users/X/PycharmProjects/pythonProject/crosswords/arial_bold.ttf', 27)
-NUMBER_FONT = pg.font.Font('C:/Users/X/PycharmProjects/pythonProject/crosswords/arial.ttf', 12)
-ARROW_FONT = pg.font.Font('C:/Users/X/PycharmProjects/pythonProject/crosswords/Symbola.ttf', 10)
+screen.blit(background, (0, 0))
+FONT = pg.font.Font('arial_bold.ttf', 27)
+BUTTON_FONT = pg.font.Font('arial_bold.ttf', 20)
+NUMBER_FONT = pg.font.Font('arial.ttf', 12)
+ARROW_FONT = pg.font.Font('Symbola.ttf', 10)
 horizontal_number = 1
 vertical_number = 1
-special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
+# special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
+special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 
 
 buttons = []
@@ -37,7 +40,7 @@ class Button:
         self.bottom_rect = pg.Rect(x, y, width, height)
         self.elevation = elevation
         self.text = text
-        self.text_surface = NUMBER_FONT.render(text, True, black)
+        self.text_surface = BUTTON_FONT.render(text, True, black)
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
         self.button_type = button_type
         self.color = grey
@@ -56,7 +59,8 @@ class Button:
             if pg.mouse.get_pressed()[0]:
                 self.rect.y = self.bottom_rect.y
                 self.update_text()
-                screen.fill(pink)
+                # screen.fill(pink)
+                screen.blit(background, (0, 0))
                 draw_buttons()
                 self.generate_crossword()
             else:
@@ -261,8 +265,28 @@ def get_word(array, length):
     while found is not True:
         word = random.choice(array_sorted)
         if len(word) == length:
-            # found = True
             return word
+
+
+def get_word_special_chars(letter):
+    if letter == 'ą':
+        return random.choice(words_a_pl)
+    if letter == 'ę':
+        return random.choice(words_e_pl)
+    if letter == 'ń':
+        return random.choice(words_n_pl)
+    if letter == 'ć':
+        return random.choice(words_c_pl)
+    if letter == 'ó':
+        return random.choice(words_o_pl)
+    if letter == 'ł':
+        return random.choice(words_l_pl)
+    if letter == 'ś':
+        return random.choice(words_s_pl)
+    if letter == 'ź':
+        return random.choice(words_x_pl)
+    if letter == 'ż':
+        return random.choice(words_z_pl)
 
 
 def get_word_from_letter(row, column, length):
@@ -380,6 +404,7 @@ def fill_the_grid():
 
 #TODO: zescrapować słówka ze special_chars i dodać, żeby nie zamykały krzyżówy
 def crossword_1():
+    clear()
     final_word = get_random_word(18)
     place_word(input_boxes, 1, 10, final_word, True)
     for i in range(1, 19):
@@ -393,12 +418,15 @@ def crossword_1():
         word_placed = False
         print(row)
         while word_placed is not True:
-            word = get_random_word(random.randint(5, 10))
+            if letter_final not in special_chars:
+                word = get_random_word(random.randint(5, 10))
+            else:
+                word = get_word_special_chars(letter_final)
             for letter in word:
-                if letter is letter_final:
+                if letter == letter_final:
+                    print(word)
                     print(letter_final, word, 'to słowo pasuje')
                     print('jest na miejscu', word.index(letter_final))
-                    print(word.index(letter_final))
                     column = col - int(word.index(letter_final))
                     if is_empty_test(input_boxes, row, column, word, False) is True:
                         place_word(input_boxes, row, column, word, False)
@@ -419,18 +447,20 @@ def crossword_1():
 
 
 def clear():
-    for i in range(len(input_boxes)):
-        for box in input_boxes[i]:
-            box.text = ''
-            box.is_dead = False
-    pg.display.flip()
+    global input_boxes
+    global vertical_number
+    global horizontal_number
+    input_boxes = []
+    draw_grid(20, 20)
+    vertical_number = 1
+    horizontal_number = 1
 
 
 
 
-button0 = Button(125, 810, 150, 75, 4, 'Krzyżuwa #1', 0)
+button0 = Button(125, 810, 150, 75, 4, 'Crossword #1', 0)
 button1 = Button(325, 810, 150, 75, 4, 'Sraka', 1)
-button2 = Button(525, 810, 150, 75, 4, 'Czyść', 2)
+button2 = Button(525, 810, 150, 75, 4, 'Clear', 2)
 def draw_buttons():
     for b in buttons:
         b.draw()
@@ -438,66 +468,21 @@ def draw_buttons():
 
 def main():
     clock = pg.time.Clock()
-    # draw_grid_exp(25,25)
     draw_grid(20, 20)
     draw_buttons()
-
-    # fill_the_grid_exp(word_list_sorted)
-    # place_word(0, 0, 'LIME', True)
-    # print(is_empty(0, 0, 'LIP', True))
-    # print(is_empty(3, 0, 'PATRYK', False))
-    # input_box1 = Box(300, 300, block_size, 'A')
-    # input_box2 = Box(500, 500, block_size)
-    # input_boxes = [input_box1, input_box2]
-    # draw_grid(25, 30)
-    # place_word(0, 0, 'KOCHAM CIE ANIU', False)
-    # place_word(5, 2, 'SEKSRUCHANIE', True)
-    # input_boxes[13].is_dead = True
     done = False
-    print(is_empty_test(input_boxes, 0, 0, 'KROWA', False))
-    # fill_the_grid()
-    # arr = np.array(input_boxes)
-    # arr_2d = np.reshape(arr, (25,25))
-    # fill_the_grid_exp(word_list_sorted)
-    # # print(is_empty(arr_2d, 0, 0, 'PUMPERNICKEL', True))
-    # place_word(input_boxes, 0, 0, 'PUMPERNICKEL', False)
-    # fill_the_grid_rec(words, input_boxes)
-    # print(unused_words)
-
-    # test_words = ['VELEN', 'LIME', 'PUM', 'NIGGER']
-    # fill_the_grid_rec(test_words, input_boxes)
-    # print(is_empty(input_boxes, 5, 0, 'A', False))
-    # print(is_empty(input_boxes, 5, 0, 'AA', False))
-    # print(is_empty(input_boxes, 5, 0, 'AAA', False))
-    # print(is_empty(input_boxes, 5, 0, 'AAAA', False))
-    # print(is_empty(input_boxes, 5, 0, 'AAAAA', False))
-    # print(is_empty(input_boxes, 0, 23, 'PUMPERNICKEL', False))
-    # print(is_empty(input_boxes, 23, 0, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', True))
-    # input_boxes[0][0].add_number('01', True)
-    # input_boxes[0][0].add_number('01 ', False)
-    # input_boxes[0][3].add_number('16', True)
-
-
-    # fill_the_grid_rec2(unused_words, input_boxes)
-
-
-    # fill_the_grid_rec(words222, input_boxes)
-
-    # fill_the_grid_np(word_list_sorted, arr_2d)
-    # fill_the_grid_test(word_list_sorted, arr_2d)
-
     while not done:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 done = True
-            for i in range(len(input_boxes)): # good 2d version
+            for i in range(len(input_boxes)):
                 for box in input_boxes[i]:
                     box.handle_event(event)
             for b in buttons:
                 b.button_event()
                 b.draw()
 
-        for i in range(len(input_boxes)): # good 2d version
+        for i in range(len(input_boxes)):
             for box in input_boxes[i]:
                 box.draw()
 
@@ -510,5 +495,4 @@ if __name__ == '__main__':
     pg.quit()
 
 #TODO: dodać przycisk do debug mode, który będzie włączał dodawanie słów strzałkami
-#TODO: dodać przyciski do robienia różnych rodzajów krzyżówek
 #TODO: scraping definicji słów

@@ -69,6 +69,7 @@ words_z = next(reader_file)
 print(len(words_a + words_b + words_c + words_d + words_e + words_f + words_g + words_h + words_i + words_j + words_k + words_l + words_m + words_n + words_o
           + words_p + words_r + words_s + words_t + words_u + words_w + words_z))
 
+
 def check_words_length(array):
     array_sorted = sorted(array, key=len)
     first_word = array_sorted[0]
@@ -76,8 +77,27 @@ def check_words_length(array):
     print(f'Shortest word is {first_word}, {len(first_word)} and longest word is {last_word}, {len(last_word)}')
 
 
+aen_letters = ['ą', 'ę', 'ń']
+words_with_aen = []
+words_a_pl = []
+words_e_pl = []
+words_n_pl = []
+with open('words.csv', 'r', encoding='UTF8') as file:
+    reader = csv.reader(file)
+    for row in reader:
+        for word in row:
+            for letter in word:
+                if letter in aen_letters:
+                    words_with_aen.append(word)
+                    if letter == aen_letters[0]:
+                        words_a_pl.append(word)
+                    elif letter == aen_letters[1]:
+                        words_e_pl.append(word)
+                    else:
+                        words_n_pl.append(word)
 
 
+print(len(words_with_aen))
 # get_word(words_a, 1)
 
 
