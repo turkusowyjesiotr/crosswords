@@ -29,8 +29,8 @@ NUMBER_FONT = pg.font.Font('arial.ttf', 12)
 ARROW_FONT = pg.font.Font('Symbola.ttf', 10)
 horizontal_number = 1
 vertical_number = 1
-# special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
-special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
+special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
+# special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 
 
 buttons = []
