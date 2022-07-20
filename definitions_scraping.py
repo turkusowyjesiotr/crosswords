@@ -28,22 +28,22 @@ def check_button_exists():
 
 def scrape_definitions(word):
     driver.get(f'http://wordlist.eu/slowo/{word}')
-    if check_button_exists() is True:
-        html = driver.find_element(By.TAG_NAME, 'html')
-        html.send_keys(Keys.END)
-        button = driver.find_element(By.CSS_SELECTOR, 'a.btn-default:nth-child(1)')
-        button.click()
+    # if check_button_exists() is True:
+    #     html = driver.find_element(By.TAG_NAME, 'html')
+    #     html.send_keys(Keys.END)
+    #     button = driver.find_element(By.CSS_SELECTOR, 'a.btn-default:nth-child(1)')
+    #     button.click()
     elements = driver.find_elements(By.XPATH, '//dd[contains(@id, "dfn")]')
     definitions = [el.text for el in elements]
+    definitions = definitions[0:4]
     if definitions is []:
-        driver.quit()
+        # driver.quit()
         return False
     else:
-        driver.quit()
+        # driver.quit()
         return definitions
 
 
-print(scrape_definitions('roztocze'))
-
-
+def quit_driver():
+    driver.quit()
 

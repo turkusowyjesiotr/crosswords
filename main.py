@@ -1,14 +1,18 @@
 import pygame as pg
 from word_scraping import words_a, words_b, words_c, words_d, words_e, words_f, words_g, words_h, words_i, words_j, \
     words_k, words_l, words_m, words_n, words_o, words_p, words_r, words_s, words_t, words_u, words_w, words_z, \
-    words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl, words_with_aen, words_a_pl, words_e_pl, \
+    words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl, words_a_pl, words_e_pl, \
     words_n_pl
+from definitions_scraping import scrape_definitions, quit_driver
+import hourglass
 import random
 import string
+import time
+import threading
 
 
 pg.init()
-background = pg.image.load('paper.jpg')
+background = pg.image.load('assets/paper.jpg')
 window_width = 1800
 window_height = 900
 screen = pg.display.set_mode((window_width, window_height))
@@ -23,17 +27,25 @@ gold = pg.Color(235, 198, 52)
 screen.fill(pink)
 block_size = 40
 screen.blit(background, (0, 0))
-FONT = pg.font.Font('arial_bold.ttf', 27)
-BUTTON_FONT = pg.font.Font('arial_bold.ttf', 20)
-NUMBER_FONT = pg.font.Font('arial.ttf', 12)
-ARROW_FONT = pg.font.Font('Symbola.ttf', 10)
+FONT = pg.font.Font('assets/arial_bold.ttf', 27)
+BUTTON_FONT = pg.font.Font('assets/arial_bold.ttf', 20)
+NUMBER_FONT = pg.font.Font('assets/arial.ttf', 12)
+ARROW_FONT = pg.font.Font('assets/Symbola.ttf', 10)
+DEF_FONT = pg.font.Font('assets/arial.ttf', 15)
+LOADING_FONT = pg.font.Font('assets/arial_bold.ttf', 40)
 horizontal_number = 1
 vertical_number = 1
 special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
 # special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
-
-
 buttons = []
+words_used = {}
+# definitions = []
+loaded = True
+moving_sprites = pg.sprite.Group()
+loading_icon = hourglass.Hourglass(1300, 400)
+moving_sprites.add(loading_icon)
+
+
 class Button:
     def __init__(self, x, y, width, height, elevation, text, button_type):
         self.rect = pg.Rect(x, y, width, height)
@@ -59,7 +71,6 @@ class Button:
             if pg.mouse.get_pressed()[0]:
                 self.rect.y = self.bottom_rect.y
                 self.update_text()
-                # screen.fill(pink)
                 screen.blit(background, (0, 0))
                 draw_buttons()
                 self.generate_crossword()
@@ -77,14 +88,19 @@ class Button:
         pg.draw.rect(screen, self.color, self.rect)
         pg.draw.rect(screen, self.border_color, self.rect, 2)
         screen.blit(self.text_surface, self.text_rect)
-
+    #TODO: TUTAJ JEST SYF, naucz się threadingu
     def generate_crossword(self):
         if self.button_type == 0:
-            crossword_1()
+            # loading(True)
+            t = threading.Thread(target=loading2)
+            d = threading.Thread(target=crossword_1)
+            t.start()
+            d.start()
         elif self.button_type == 1:
-            print('button 1')
+            loading(False)
         elif self.button_type == 2:
-            clear()
+            # definicje_test()
+            loading(True)
 
 
 class Box:
@@ -402,7 +418,7 @@ def fill_the_grid():
     place_word(input_boxes, 0, 6, get_word_from_letter(0, 6, 10), True)
     place_word(input_boxes, 8, 6, get_word_from_letter(8, 6, 7), False)
 
-#TODO: zescrapować słówka ze special_chars i dodać, żeby nie zamykały krzyżówy
+
 def crossword_1():
     clear()
     final_word = get_random_word(18)
@@ -413,10 +429,7 @@ def crossword_1():
     row = 1
     col = 10
     for letter_final in final_word:
-        print(final_word)
-        print(letter_final)
         word_placed = False
-        print(row)
         while word_placed is not True:
             if letter_final not in special_chars:
                 word = get_random_word(random.randint(5, 10))
@@ -424,18 +437,19 @@ def crossword_1():
                 word = get_word_special_chars(letter_final)
             for letter in word:
                 if letter == letter_final:
-                    print(word)
-                    print(letter_final, word, 'to słowo pasuje')
-                    print('jest na miejscu', word.index(letter_final))
+                    # print(word)
+                    # print(letter_final, word, 'to słowo pasuje')
+                    # print('jest na miejscu', word.index(letter_final))
                     column = col - int(word.index(letter_final))
-                    if is_empty_test(input_boxes, row, column, word, False) is True:
+                    if is_empty_test(input_boxes, row, column, word, False) is True and add_definitions(word) is True:
                         place_word(input_boxes, row, column, word, False)
-                        print(word, ' umieszczone na literze ', letter_final, 'z kolumny: ', column, ' dlugosc: ', column + len(word))
+                        # print(word, ' umieszczone na literze ', letter_final, 'z kolumny: ', column, ' dlugosc: ', column + len(word))
                         row += 1
+                        print(words_used)
                         word_placed = True
                         break
                     else:
-                        print(word, ' nie zmiescilo sie')
+                        # print(word, ' nie zmiescilo sie')
                         continue
                 else:
                     continue
@@ -444,6 +458,9 @@ def crossword_1():
         for box in input_boxes[i]:
             if box.text == '':
                 box.is_dead = True
+    # quit_driver()
+    loading(False)
+    definicje_test()
 
 
 def clear():
@@ -455,7 +472,50 @@ def clear():
     vertical_number = 1
     horizontal_number = 1
 
+def definicje_test():
+    draw_definitions()
 
+
+def add_definitions(word):
+    value = scrape_definitions(word)
+    if value == []:
+        return False
+    else:
+        words_used.update({word: value})
+        return True
+
+
+def draw_definitions():
+    horizontal_x = 920
+    vertical_x = 1420
+    y = 30
+    number = 1
+    poziomo = FONT.render('Poziomo:', True, black)
+    pionowo = FONT.render('Pionowo:', True, black)
+    screen.blit(poziomo, (horizontal_x, y))
+    screen.blit(pionowo, (vertical_x, y))
+    for word in words_used:
+        definitions_list = words_used.get(word)
+        definition = definitions_list[0]
+        if len(definition) > 55:
+            def_part1 = definition[0:55] + '-'
+            def_part2 = definition[55:]
+            definition_text1 = DEF_FONT.render(f'{number}: ' + def_part1, True, black)
+            definition_text2 = DEF_FONT.render('    ' + def_part2, True, black)
+            screen.blit(definition_text1, (horizontal_x, y + 50))
+            screen.blit(definition_text2, (horizontal_x, y + 66))
+        else:
+            definition_text = DEF_FONT.render(f'{number}: ' + definition, True, black)
+            screen.blit(definition_text, (horizontal_x, y + 50))
+        y += 35
+        number += 1
+        # time.sleep(10)
+
+
+def update_game_state():
+    screen.blit(background, (0, 0))
+    draw_buttons()
+    # draw_definitions()
 
 
 button0 = Button(125, 810, 150, 75, 4, 'Crossword #1', 0)
@@ -466,12 +526,41 @@ def draw_buttons():
         b.draw()
 
 
+def loading(play_animation: bool):
+    global loaded
+    if play_animation is True:
+        loaded = False
+    else:
+        loaded = True
+    update_game_state()
+
+
+def loading2():
+    global loaded
+    loaded = False
+    while loaded is False:
+        update_game_state()
+        moving_sprites.draw(screen)
+        moving_sprites.update(0.5)
+        loading_text = LOADING_FONT.render(loading_icon.text, True, black)
+        screen.blit(loading_text, loading_icon.text_pos)
+        time.sleep(1)
+
+
 def main():
     clock = pg.time.Clock()
     draw_grid(20, 20)
     draw_buttons()
     done = False
+
     while not done:
+        if loaded is False:
+            update_game_state()
+            moving_sprites.draw(screen)
+            moving_sprites.update(0.5)
+            loading_text = LOADING_FONT.render(loading_icon.text, True, black)
+            screen.blit(loading_text, loading_icon.text_pos)
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 done = True
@@ -490,9 +579,9 @@ def main():
         clock.tick(30)
 
 
+
 if __name__ == '__main__':
     main()
     pg.quit()
 
 #TODO: dodać przycisk do debug mode, który będzie włączał dodawanie słów strzałkami
-#TODO: scraping definicji słów

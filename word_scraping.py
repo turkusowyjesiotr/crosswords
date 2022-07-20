@@ -97,8 +97,7 @@ with open('words.csv', 'r', encoding='UTF8') as file:
                         words_n_pl.append(word)
 
 
-print(len(words_with_aen))
-# get_word(words_a, 1)
+
 
 
 
