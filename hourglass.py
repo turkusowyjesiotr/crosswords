@@ -16,7 +16,7 @@ class Hourglass(pg.sprite.Sprite):
         self.image = self.sprites[self.current_sprite]
         self.rect = self.image.get_rect()
         self.rect.center = [x, y]
-        self.texts = ['GENERATING.', 'GENERATING..', 'GENERATING...']
+        self.texts = ['GENERATING', 'GENERATING.', 'GENERATING..', 'GENERATING...']
         self.text = self.texts[self.current_text]
         self.text_pos = (x - 135, y + 190)
 
@@ -30,28 +30,4 @@ class Hourglass(pg.sprite.Sprite):
         if int(self.current_text) >= len(self.texts):
             self.current_text = 0
         self.text = self.texts[int(self.current_text)]
-
-
-
-# pg.init()
-# clock = pg.time.Clock()
-#
-# screen_width = 1000
-# screen_height = 1000
-# screen = pg.display.set_mode((screen_width, screen_height))
-
-# moving_sprites = pg.sprite.Group()
-# hourglass = Hourglass(300, 300)
-# moving_sprites.add(hourglass)
-
-# while True:
-#     for event in pg.event.get():
-#         if event.type == pg.QUIT:
-#             pg.quit()
-#
-#     screen.fill((0, 0, 0))
-#     moving_sprites.draw(screen)
-#     moving_sprites.update(0.4)
-#     pg.display.flip()
-#     clock.tick(60)
 

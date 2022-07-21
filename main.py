@@ -7,7 +7,6 @@ from definitions_scraping import scrape_definitions, quit_driver
 import hourglass
 import random
 import string
-import time
 import threading
 
 
@@ -24,7 +23,8 @@ pink = pg.Color(242, 233, 238)
 dark_grey = pg.Color(90, 90, 90)
 dark_grey_2 = pg.Color(170, 170, 170)
 gold = pg.Color(235, 198, 52)
-screen.fill(pink)
+green = pg.Color(0, 128, 0)
+red = pg.Color(255, 0, 0)
 block_size = 40
 screen.blit(background, (0, 0))
 FONT = pg.font.Font('assets/arial_bold.ttf', 27)
@@ -39,8 +39,8 @@ special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
 # special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 buttons = []
 words_used = {}
-# definitions = []
 loaded = True
+debug_mode = False
 moving_sprites = pg.sprite.Group()
 loading_icon = hourglass.Hourglass(1300, 400)
 moving_sprites.add(loading_icon)
@@ -88,25 +88,28 @@ class Button:
         pg.draw.rect(screen, self.color, self.rect)
         pg.draw.rect(screen, self.border_color, self.rect, 2)
         screen.blit(self.text_surface, self.text_rect)
-    #TODO: TUTAJ JEST SYF, naucz się threadingu
+
     def generate_crossword(self):
         if self.button_type == 0:
-            # loading(True)
-            t = threading.Thread(target=loading2)
+            t = threading.Thread(target=loading(True))
             d = threading.Thread(target=crossword_1)
             t.start()
             d.start()
         elif self.button_type == 1:
-            loading(False)
+            t = threading.Thread(target=loading(True))
+            d = threading.Thread(target=crossword_2)
+            t.start()
+            d.start()
         elif self.button_type == 2:
-            # definicje_test()
-            loading(True)
+            draw_definitions()
+            debug()
 
 
 class Box:
     def __init__(self, x, y, size, row, column, text='', is_dead=False):
         self.rect = pg.Rect(x, y, size, size)
         self.text = text
+        self.secret_text = ''
         self.color = white
         self.border_color = black
         self.txt_surface = FONT.render(text, True, black)
@@ -142,6 +145,7 @@ class Box:
                     self.color = white
                 if self.active:
                     self.color = blue
+
             if event.type == pg.KEYDOWN:
                 not_active = [pg.K_RALT, pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_BACKSPACE, pg.K_RETURN,
                               pg.K_UP, pg.K_LALT, pg.K_LCTRL, pg.K_RCTRL, pg.K_RSHIFT, pg.K_LSHIFT, pg.K_SPACE]
@@ -163,7 +167,11 @@ class Box:
                         self.color = gold if self.final else white
                     elif event.key == pg.K_BACKSPACE:
                         self.text = self.text[:-1]
-                self.txt_surface = FONT.render(self.text, True, black)
+
+                if self.secret_text == self.text:
+                    self.txt_surface = FONT.render(self.text, True, green)
+                else:
+                    self.txt_surface = FONT.render(self.text, True, red)
 
     def draw(self):
         if not self.is_dead:
@@ -177,8 +185,12 @@ class Box:
             pg.draw.rect(screen, black, self.rect)
 
     def add_text(self, text):
-        self.text = text
+        self.secret_text = text
+
+    def reveal_text(self):
+        self.text = self.secret_text
         self.txt_surface = FONT.render(self.text, True, black)
+        self.draw()
 
     def add_number(self, number, is_vertical):
         self.number = number
@@ -423,6 +435,8 @@ def crossword_1():
     clear()
     final_word = get_random_word(18)
     place_word(input_boxes, 1, 10, final_word, True)
+    input_boxes[1][10].add_number('', True)
+    input_boxes[1][10].arrow_surface_vertical = NUMBER_FONT.render('', True, black)
     for i in range(1, 19):
         input_boxes[i][10].color = gold
         input_boxes[i][10].final = True
@@ -437,48 +451,63 @@ def crossword_1():
                 word = get_word_special_chars(letter_final)
             for letter in word:
                 if letter == letter_final:
-                    # print(word)
-                    # print(letter_final, word, 'to słowo pasuje')
-                    # print('jest na miejscu', word.index(letter_final))
                     column = col - int(word.index(letter_final))
                     if is_empty_test(input_boxes, row, column, word, False) is True and add_definitions(word) is True:
                         place_word(input_boxes, row, column, word, False)
-                        # print(word, ' umieszczone na literze ', letter_final, 'z kolumny: ', column, ' dlugosc: ', column + len(word))
                         row += 1
                         print(words_used)
                         word_placed = True
                         break
                     else:
-                        # print(word, ' nie zmiescilo sie')
                         continue
                 else:
                     continue
 
     for i in range(len(input_boxes)):
         for box in input_boxes[i]:
-            if box.text == '':
+            if box.secret_text == '':
                 box.is_dead = True
-    # quit_driver()
+    quit_driver()
     loading(False)
-    definicje_test()
+    update_game_state()
+    draw_definitions()
+
+
+def crossword_2():
+    clear()
+    first_placed = False
+    while not first_placed:
+        x = random.randint(0, 2)
+        y = random.randint(0, 2)
+        z = bool(random.getrandbits(1))
+        first_word = get_random_word(random.randint(6, 15))
+        if add_definitions(first_word) is True:
+            place_word(input_boxes, x, y, first_word, z)
+            first_placed = True
+            print(words_used)
+        else:
+            continue
+    quit_driver()
+    loading(False)
+    update_game_state()
+    draw_definitions()
 
 
 def clear():
     global input_boxes
     global vertical_number
     global horizontal_number
+    global words_used
     input_boxes = []
     draw_grid(20, 20)
     vertical_number = 1
     horizontal_number = 1
-
-def definicje_test():
-    draw_definitions()
+    words_used = {}
 
 
 def add_definitions(word):
     value = scrape_definitions(word)
-    if value == []:
+    if not value:
         return False
     else:
         words_used.update({word: value})
@@ -510,6 +539,7 @@ def draw_definitions():
         y += 35
         number += 1
         # time.sleep(10)
+    loading(False)
 
 
 def update_game_state():
@@ -519,32 +549,26 @@ def update_game_state():
 
 
 button0 = Button(125, 810, 150, 75, 4, 'Crossword #1', 0)
-button1 = Button(325, 810, 150, 75, 4, 'Sraka', 1)
-button2 = Button(525, 810, 150, 75, 4, 'Clear', 2)
+button1 = Button(325, 810, 150, 75, 4, 'Crossword #2', 1)
+button2 = Button(525, 810, 150, 75, 4, 'Show answers', 2)
 def draw_buttons():
     for b in buttons:
         b.draw()
 
 
-def loading(play_animation: bool):
+def loading(play_animation):
     global loaded
-    if play_animation is True:
+    if play_animation:
         loaded = False
-    else:
+    if not play_animation:
         loaded = True
-    update_game_state()
 
 
-def loading2():
-    global loaded
-    loaded = False
-    while loaded is False:
-        update_game_state()
-        moving_sprites.draw(screen)
-        moving_sprites.update(0.5)
-        loading_text = LOADING_FONT.render(loading_icon.text, True, black)
-        screen.blit(loading_text, loading_icon.text_pos)
-        time.sleep(1)
+def debug():
+    for i in range(len(input_boxes)):
+        for box in input_boxes[i]:
+            box.reveal_text()
+            # box.draw()
 
 
 def main():
