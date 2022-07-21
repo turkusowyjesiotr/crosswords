@@ -538,7 +538,6 @@ def draw_definitions():
             screen.blit(definition_text, (horizontal_x, y + 50))
         y += 35
         number += 1
-        # time.sleep(10)
     loading(False)
 
 

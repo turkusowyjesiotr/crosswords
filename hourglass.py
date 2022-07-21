@@ -30,4 +30,3 @@ class Hourglass(pg.sprite.Sprite):
         if int(self.current_text) >= len(self.texts):
             self.current_text = 0
         self.text = self.texts[int(self.current_text)]
-
