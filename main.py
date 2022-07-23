@@ -11,34 +11,35 @@ import threading
 
 
 pg.init()
-background = pg.image.load('assets/paper.jpg')
-window_width = 1800
-window_height = 900
-screen = pg.display.set_mode((window_width, window_height))
-grey = pg.Color(220, 220, 220)
-white = pg.Color(255, 255, 255)
-black = pg.Color(0, 0, 0)
-blue = pg.Color(0, 191, 255)
-pink = pg.Color(242, 233, 238)
-dark_grey = pg.Color(90, 90, 90)
-dark_grey_2 = pg.Color(170, 170, 170)
-gold = pg.Color(235, 198, 52)
-green = pg.Color(0, 128, 0)
-red = pg.Color(255, 0, 0)
+BACKGROUND = pg.image.load('assets/images/paper.jpg')
+WINDOW_WIDTH = 1800
+WINDOW_HEIGHT = 900
+SCREEN = pg.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+GREY = pg.Color(220, 220, 220)
+WHITE = pg.Color(255, 255, 255)
+BLACK = pg.Color(0, 0, 0)
+BLUE = pg.Color(0, 191, 255)
+PINK = pg.Color(242, 233, 238)
+DARK_GREY = pg.Color(90, 90, 90)
+DARK_GREY_2 = pg.Color(170, 170, 170)
+GOLD = pg.Color(235, 198, 52)
+GREEN = pg.Color(0, 128, 0)
+RED = pg.Color(255, 0, 0)
 block_size = 40
-screen.blit(background, (0, 0))
-FONT = pg.font.Font('assets/arial_bold.ttf', 27)
-BUTTON_FONT = pg.font.Font('assets/arial_bold.ttf', 20)
-NUMBER_FONT = pg.font.Font('assets/arial.ttf', 12)
-ARROW_FONT = pg.font.Font('assets/Symbola.ttf', 10)
-DEF_FONT = pg.font.Font('assets/arial.ttf', 15)
-LOADING_FONT = pg.font.Font('assets/arial_bold.ttf', 40)
+SCREEN.blit(BACKGROUND, (0, 0))
+FONT = pg.font.Font('assets/fonts/arial_bold.ttf', 27)
+BUTTON_FONT = pg.font.Font('assets/fonts/arial_bold.ttf', 20)
+NUMBER_FONT = pg.font.Font('assets/fonts/arial.ttf', 12)
+ARROW_FONT = pg.font.Font('assets/fonts/Symbola.ttf', 10)
+DEF_FONT = pg.font.Font('assets/fonts/arial.ttf', 15)
+LOADING_FONT = pg.font.Font('assets/fonts/arial_bold.ttf', 40)
 horizontal_number = 1
 vertical_number = 1
 special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
 # special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 buttons = []
-words_used = {}
+defs = []
+words_used = {'seks': ['1aaaaaaaaaaaaaaaaaaaaaaaaaa', '2']}
 loaded = True
 debug_mode = False
 moving_sprites = pg.sprite.Group()
@@ -52,12 +53,12 @@ class Button:
         self.bottom_rect = pg.Rect(x, y, width, height)
         self.elevation = elevation
         self.text = text
-        self.text_surface = BUTTON_FONT.render(text, True, black)
+        self.text_surface = BUTTON_FONT.render(text, True, BLACK)
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
         self.button_type = button_type
-        self.color = grey
-        self.bottom_color = dark_grey
-        self.border_color = black
+        self.color = GREY
+        self.bottom_color = DARK_GREY
+        self.border_color = BLACK
         self.original = y
         buttons.append(self)
 
@@ -67,29 +68,29 @@ class Button:
     def button_event(self):
         mouse_pos = pg.mouse.get_pos()
         if self.rect.collidepoint(mouse_pos):
-            self.color = dark_grey_2
+            self.color = DARK_GREY_2
             if pg.mouse.get_pressed()[0]:
                 self.rect.y = self.bottom_rect.y
                 self.update_text()
-                screen.blit(background, (0, 0))
-                draw_buttons()
-                self.generate_crossword()
+                SCREEN.blit(BACKGROUND, (0, 0))
+                update_game_state()
+                self.button_action()
             else:
                 self.rect.y = self.original
                 self.update_text()
         else:
             self.rect.y = self.original
             self.update_text()
-            self.color = grey
+            self.color = GREY
 
     def draw(self):
         self.bottom_rect.y = self.original + self.elevation
-        pg.draw.rect(screen, self.bottom_color, self.bottom_rect)
-        pg.draw.rect(screen, self.color, self.rect)
-        pg.draw.rect(screen, self.border_color, self.rect, 2)
-        screen.blit(self.text_surface, self.text_rect)
+        pg.draw.rect(SCREEN, self.bottom_color, self.bottom_rect)
+        pg.draw.rect(SCREEN, self.color, self.rect)
+        pg.draw.rect(SCREEN, self.border_color, self.rect, 2)
+        SCREEN.blit(self.text_surface, self.text_rect)
 
-    def generate_crossword(self):
+    def button_action(self):
         if self.button_type == 0:
             t = threading.Thread(target=loading(True))
             d = threading.Thread(target=crossword_1)
@@ -101,8 +102,57 @@ class Button:
             t.start()
             d.start()
         elif self.button_type == 2:
-            draw_definitions()
+            # draw_definitions()
             debug()
+
+
+class Definition(Button):
+    def __init__(self, x, y, width, height, elevation, number, word_used, text='', button_type=4):
+        # button
+        super().__init__(x, y, width, height, elevation, text, button_type)
+        img = pg.image.load('assets/images/load.png')
+        img = pg.transform.smoothscale(img, (23, 23)).convert_alpha()
+        self.btn_img = img
+
+        # definition
+        self.number = number
+        self.word_used = word_used
+        self.definitions = words_used.get(self.word_used)
+        self.current_def = 0
+        self.max_def = len(self.definitions)
+        self.definition = self.definitions[self.current_def]
+        self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
+        self.height = 50
+        self.width = 150
+        self.pos_y = self.rect.midright[1] - self.height/2
+        self.pos_x = self.rect.x + 35
+        self.def_rect = pg.Rect(self.pos_x, self.pos_y, self.width, self.height)
+
+        defs.append(self)
+
+    def draw(self):
+        super().draw()
+        SCREEN.blit(self.btn_img, (self.rect.x + 4, self.rect.y + 4))
+
+    def draw_def(self):
+        pg.draw.rect(SCREEN, self.border_color, self.def_rect, 2)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
+
+    def next_definition(self):
+        if self.current_def < self.max_def:
+            self.current_def += 1
+        else:
+            self.current_def = 0
+
+    def button_action(self):
+        super().button_action()
+        if self.button_type == 4:
+            print('seks')
+
+
+
+
+testowy = Definition(900, 50, 30, 30, 2, 1, 'seks')
 
 
 class Box:
@@ -110,15 +160,15 @@ class Box:
         self.rect = pg.Rect(x, y, size, size)
         self.text = text
         self.secret_text = ''
-        self.color = white
-        self.border_color = black
-        self.txt_surface = FONT.render(text, True, black)
+        self.color = WHITE
+        self.border_color = BLACK
+        self.txt_surface = FONT.render(text, True, BLACK)
         self.number = ''
         self.arrow_vertical = ''
         self.arrow_horizontal = ''
-        self.arrow_surface_vertical = ARROW_FONT.render(self.arrow_vertical, True, black)
-        self.arrow_surface_horizontal = ARROW_FONT.render(self.arrow_horizontal, True, black)
-        self.number_surface = NUMBER_FONT.render(self.number, True, black)
+        self.arrow_surface_vertical = ARROW_FONT.render(self.arrow_vertical, True, BLACK)
+        self.arrow_surface_horizontal = ARROW_FONT.render(self.arrow_horizontal, True, BLACK)
+        self.number_surface = NUMBER_FONT.render(self.number, True, BLACK)
         self.active = False
         self.final = False
         self.is_dead = is_dead
@@ -138,13 +188,13 @@ class Box:
                     self.active = not self.active
                 else:
                     self.active = False
-                # self.color = blue if self.active else white
+                # self.color = BLUE if self.active else WHITE
                 if self.final:
-                    self.color = gold
+                    self.color = GOLD
                 if not self.active and not self.final:
-                    self.color = white
+                    self.color = WHITE
                 if self.active:
-                    self.color = blue
+                    self.color = BLUE
 
             if event.type == pg.KEYDOWN:
                 not_active = [pg.K_RALT, pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_BACKSPACE, pg.K_RETURN,
@@ -164,41 +214,41 @@ class Box:
                         self.text = event.unicode
                         self.active = False
                         self.text = self.text.upper()
-                        self.color = gold if self.final else white
+                        self.color = GOLD if self.final else WHITE
                     elif event.key == pg.K_BACKSPACE:
                         self.text = self.text[:-1]
 
                 if self.secret_text == self.text:
-                    self.txt_surface = FONT.render(self.text, True, green)
+                    self.txt_surface = FONT.render(self.text, True, GREEN)
                 else:
-                    self.txt_surface = FONT.render(self.text, True, red)
+                    self.txt_surface = FONT.render(self.text, True, RED)
 
     def draw(self):
         if not self.is_dead:
-            pg.draw.rect(screen, self.color, self.rect)
-            pg.draw.rect(screen, self.border_color, self.rect, 2)
-            screen.blit(self.txt_surface, (self.rect.x + 11, self.rect.y + 10))
-            screen.blit(self.number_surface, (self.rect.x + 2, self.rect.y + 2))
-            screen.blit(self.arrow_surface_vertical, (self.rect.x + 4, self.rect.y + 14))
-            screen.blit(self.arrow_surface_horizontal, (self.rect.x + 16, self.rect.y + 2))
+            pg.draw.rect(SCREEN, self.color, self.rect)
+            pg.draw.rect(SCREEN, self.border_color, self.rect, 2)
+            SCREEN.blit(self.txt_surface, (self.rect.x + 11, self.rect.y + 10))
+            SCREEN.blit(self.number_surface, (self.rect.x + 2, self.rect.y + 2))
+            SCREEN.blit(self.arrow_surface_vertical, (self.rect.x + 4, self.rect.y + 14))
+            SCREEN.blit(self.arrow_surface_horizontal, (self.rect.x + 16, self.rect.y + 2))
         else:
-            pg.draw.rect(screen, black, self.rect)
+            pg.draw.rect(SCREEN, BLACK, self.rect)
 
     def add_text(self, text):
         self.secret_text = text
 
     def reveal_text(self):
         self.text = self.secret_text
-        self.txt_surface = FONT.render(self.text, True, black)
+        self.txt_surface = FONT.render(self.text, True, BLACK)
         self.draw()
 
     def add_number(self, number, is_vertical):
         self.number = number
-        self.number_surface = NUMBER_FONT.render(self.number, True, black)
+        self.number_surface = NUMBER_FONT.render(self.number, True, BLACK)
         if is_vertical:
-            self.arrow_surface_vertical = ARROW_FONT.render('\u25BC', True, black)
+            self.arrow_surface_vertical = ARROW_FONT.render('\u25BC', True, BLACK)
         else:
-            self.arrow_surface_horizontal = ARROW_FONT.render('\u27A4', True, black)
+            self.arrow_surface_horizontal = ARROW_FONT.render('\u27A4', True, BLACK)
 
 
 input_boxes = []
@@ -436,9 +486,9 @@ def crossword_1():
     final_word = get_random_word(18)
     place_word(input_boxes, 1, 10, final_word, True)
     input_boxes[1][10].add_number('', True)
-    input_boxes[1][10].arrow_surface_vertical = NUMBER_FONT.render('', True, black)
+    input_boxes[1][10].arrow_surface_vertical = NUMBER_FONT.render('', True, BLACK)
     for i in range(1, 19):
-        input_boxes[i][10].color = gold
+        input_boxes[i][10].color = GOLD
         input_boxes[i][10].final = True
     row = 1
     col = 10
@@ -477,8 +527,8 @@ def crossword_2():
     clear()
     first_placed = False
     while not first_placed:
-        x = random.randint(0, 2)
-        y = random.randint(0, 2)
+        x = random.randint(0, 1)
+        y = random.randint(0, 1)
         z = bool(random.getrandbits(1))
         first_word = get_random_word(random.randint(6, 15))
         if add_definitions(first_word) is True:
@@ -519,31 +569,33 @@ def draw_definitions():
     vertical_x = 1420
     y = 30
     number = 1
-    poziomo = FONT.render('Poziomo:', True, black)
-    pionowo = FONT.render('Pionowo:', True, black)
-    screen.blit(poziomo, (horizontal_x, y))
-    screen.blit(pionowo, (vertical_x, y))
+    poziomo = FONT.render('Poziomo:', True, BLACK)
+    pionowo = FONT.render('Pionowo:', True, BLACK)
+    SCREEN.blit(poziomo, (horizontal_x, y))
+    SCREEN.blit(pionowo, (vertical_x, y))
     for word in words_used:
         definitions_list = words_used.get(word)
         definition = definitions_list[0]
         if len(definition) > 55:
             def_part1 = definition[0:55] + '-'
             def_part2 = definition[55:]
-            definition_text1 = DEF_FONT.render(f'{number}: ' + def_part1, True, black)
-            definition_text2 = DEF_FONT.render('    ' + def_part2, True, black)
-            screen.blit(definition_text1, (horizontal_x, y + 50))
-            screen.blit(definition_text2, (horizontal_x, y + 66))
+            definition_text1 = DEF_FONT.render(f'{number}: ' + def_part1, True, BLACK)
+            definition_text2 = DEF_FONT.render('    ' + def_part2, True, BLACK)
+            SCREEN.blit(definition_text1, (horizontal_x, y + 50))
+            SCREEN.blit(definition_text2, (horizontal_x, y + 66))
         else:
-            definition_text = DEF_FONT.render(f'{number}: ' + definition, True, black)
-            screen.blit(definition_text, (horizontal_x, y + 50))
+            definition_text = DEF_FONT.render(f'{number}: ' + definition, True, BLACK)
+            SCREEN.blit(definition_text, (horizontal_x, y + 50))
         y += 35
         number += 1
     loading(False)
 
 
 def update_game_state():
-    screen.blit(background, (0, 0))
+    SCREEN.blit(BACKGROUND, (0, 0))
     draw_buttons()
+    for d in defs:
+        d.draw_def()
     # draw_definitions()
 
 
@@ -567,22 +619,22 @@ def debug():
     for i in range(len(input_boxes)):
         for box in input_boxes[i]:
             box.reveal_text()
-            # box.draw()
 
 
 def main():
     clock = pg.time.Clock()
     draw_grid(20, 20)
-    draw_buttons()
+    # draw_buttons()
     done = False
+    testowy.draw_def()
 
     while not done:
         if loaded is False:
             update_game_state()
-            moving_sprites.draw(screen)
+            moving_sprites.draw(SCREEN)
             moving_sprites.update(0.5)
-            loading_text = LOADING_FONT.render(loading_icon.text, True, black)
-            screen.blit(loading_text, loading_icon.text_pos)
+            loading_text = LOADING_FONT.render(loading_icon.text, True, BLACK)
+            SCREEN.blit(loading_text, loading_icon.text_pos)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
