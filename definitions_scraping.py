@@ -6,11 +6,12 @@ from selenium.webdriver.common.keys import Keys
 
 
 options = Options()
-options.headless = True
-driver = webdriver.Chrome('C:/Users/X/Desktop/chromedriver.exe', options=options)
+options.headless = False
+
 
 
 def check_definitions_exists():
+    driver = webdriver.Chrome('C:/Users/X/Desktop/chromedriver.exe', options=options)
     try:
         driver.find_element(By.CSS_SELECTOR, '.alert > button:nth-child(1)')
     except NoSuchElementException:
@@ -19,6 +20,7 @@ def check_definitions_exists():
 
 
 def check_button_exists():
+    driver = webdriver.Chrome('C:/Users/X/Desktop/chromedriver.exe', options=options)
     try:
         driver.find_element(By.CSS_SELECTOR, 'a.btn-default:nth-child(1)')
     except NoSuchElementException:
@@ -27,6 +29,7 @@ def check_button_exists():
 
 
 def scrape_definitions(word):
+    driver = webdriver.Chrome('C:/Users/X/Desktop/chromedriver.exe', options=options)
     driver.get(f'http://wordlist.eu/slowo/{word}')
     # if check_button_exists() is True:
     #     html = driver.find_element(By.TAG_NAME, 'html')
@@ -37,13 +40,13 @@ def scrape_definitions(word):
     definitions = [el.text for el in elements]
     definitions = definitions[0:4]
     if definitions is []:
-        # driver.quit()
+        driver.quit()
         return False
     else:
-        # driver.quit()
+        driver.quit()
         return definitions
 
 
 def quit_driver():
-    driver.quit()
+    pass
 

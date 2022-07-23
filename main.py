@@ -39,7 +39,11 @@ special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
 # special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 buttons = []
 defs = []
-words_used = {'seks': ['1aaaaaaaaaaaaaaaaaaaaaaaaaa', '2']}
+show_definitions = False
+words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the \
+industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to\
+                       make a type specimen book. It has survived not only five centuries, but also the leap into electronic\
+                        typesetting, remaining essentially unchanged.']}
 loaded = True
 debug_mode = False
 moving_sprites = pg.sprite.Group()
@@ -60,7 +64,10 @@ class Button:
         self.bottom_color = DARK_GREY
         self.border_color = BLACK
         self.original = y
-        buttons.append(self)
+        if button_type == 4:
+            defs.append(self)
+        else:
+            buttons.append(self)
 
     def update_text(self):
         self.text_rect = self.text_surface.get_rect(center=self.rect.center)
@@ -72,7 +79,7 @@ class Button:
             if pg.mouse.get_pressed()[0]:
                 self.rect.y = self.bottom_rect.y
                 self.update_text()
-                SCREEN.blit(BACKGROUND, (0, 0))
+                # SCREEN.blit(BACKGROUND, (0, 0))
                 update_game_state()
                 self.button_action()
             else:
@@ -104,6 +111,8 @@ class Button:
         elif self.button_type == 2:
             # draw_definitions()
             debug()
+            global show_definitions
+            show_definitions = not show_definitions
 
 
 class Definition(Button):
@@ -119,16 +128,14 @@ class Definition(Button):
         self.word_used = word_used
         self.definitions = words_used.get(self.word_used)
         self.current_def = 0
-        self.max_def = len(self.definitions)
+        self.max_def = len(self.definitions) - 1
         self.definition = self.definitions[self.current_def]
         self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
         self.height = 50
-        self.width = 150
+        self.width = 400
         self.pos_y = self.rect.midright[1] - self.height/2
         self.pos_x = self.rect.x + 35
         self.def_rect = pg.Rect(self.pos_x, self.pos_y, self.width, self.height)
-
-        defs.append(self)
 
     def draw(self):
         super().draw()
@@ -136,23 +143,40 @@ class Definition(Button):
 
     def draw_def(self):
         pg.draw.rect(SCREEN, self.border_color, self.def_rect, 2)
+        y = self.def_rect.top
+        line_spacing = -2
+        for letter in self.definition:
+            font_width = 0
+        font_height = DEF_FONT.size('T')[1]
+        print(font_height)
         SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
 
     def next_definition(self):
-        if self.current_def < self.max_def:
-            self.current_def += 1
-        else:
+        if self.current_def >= self.max_def:
             self.current_def = 0
+            self.definition = self.definitions[self.current_def]
+        else:
+            self.current_def += 1
+            self.definition = self.definitions[self.current_def]
 
     def button_action(self):
         super().button_action()
         if self.button_type == 4:
-            print('seks')
+            self.next_definition()
+            self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
+            update_game_state()
 
 
 
 
-testowy = Definition(900, 50, 30, 30, 2, 1, 'seks')
+
+# testowy = Definition(900, 50, 30, 30, 2, 1, 'seks')
+testowy2 = Definition(1350, 70, 30, 30, 2, 1, 'seks')
+x = 70
+for i in range(15):
+    Definition(900, x, 30, 30, 2, 1, 'seks')
+    x += 55
+print(defs)
 
 
 class Box:
@@ -162,7 +186,7 @@ class Box:
         self.secret_text = ''
         self.color = WHITE
         self.border_color = BLACK
-        self.txt_surface = FONT.render(text, True, BLACK)
+        self.txt_surface = FONT.render(self.text, True, BLACK)
         self.number = ''
         self.arrow_vertical = ''
         self.arrow_horizontal = ''
@@ -201,12 +225,12 @@ class Box:
                               pg.K_UP, pg.K_LALT, pg.K_LCTRL, pg.K_RCTRL, pg.K_RSHIFT, pg.K_LSHIFT, pg.K_SPACE]
                 if self.active:
                     if event.key == pg.K_RIGHT:
-                        length = random.randint(3,10)
+                        length = random.randint(3, 10)
                         word = get_word_from_letter(self.row, self.column, length)
                         if is_empty(input_boxes, self.row, self.column, word, False):
                             place_word(input_boxes, self.row, self.column, word, False)
                     elif event.key == pg.K_DOWN:
-                        length = random.randint(3,10)
+                        length = random.randint(3, 10)
                         word = get_word_from_letter(self.row, self.column, length)
                         if is_empty(input_boxes, self.row, self.column, word, True):
                             place_word(input_boxes, self.row, self.column, word, True)
@@ -288,9 +312,9 @@ def place_word(array, row, col, word, is_vertical):
             array[row + i_count][col].is_dead = True
     if word is None:
         print('NoneObject passed')
-#TODO: rozpisać sobie na kartce logikę is_empty, żeby sprawdzało czy po kolejnym boxie po słowie jest is_dead (jeśli tak, to umieść słowo)
-# i żeby sprawdzało czy po bokach słowa nie ma innych słów
-# i perhaps czy są jakieś przecinające się słówka
+# TODO: rozpisać sobie na kartce logikę is_empty, żeby sprawdzało czy po kolejnym boxie po słowie jest is_dead (jeśli tak, to umieść słowo) \
+#  i żeby sprawdzało czy po bokach słowa nie ma innych słów \
+#  i perhaps czy są jakieś przecinające się słówka
 
 def is_empty_test(array, row, col, word, is_vertical: bool):
     if word is not None:
@@ -596,6 +620,7 @@ def update_game_state():
     draw_buttons()
     for d in defs:
         d.draw_def()
+        d.draw()
     # draw_definitions()
 
 
@@ -626,7 +651,7 @@ def main():
     draw_grid(20, 20)
     # draw_buttons()
     done = False
-    testowy.draw_def()
+    # testowy.draw_def()
 
     while not done:
         if loaded is False:
@@ -645,6 +670,10 @@ def main():
             for b in buttons:
                 b.button_event()
                 b.draw()
+            if show_definitions:
+                for d in defs:
+                    d.button_event()
+                    d.draw()
 
         for i in range(len(input_boxes)):
             for box in input_boxes[i]:
@@ -659,4 +688,4 @@ if __name__ == '__main__':
     main()
     pg.quit()
 
-#TODO: dodać przycisk do debug mode, który będzie włączał dodawanie słów strzałkami
+# TODO: dodać przycisk do debug mode, który będzie włączał dodawanie słów strzałkami
