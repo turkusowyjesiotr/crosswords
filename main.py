@@ -8,6 +8,7 @@ import hourglass
 import random
 import string
 import threading
+import time
 
 
 pg.init()
@@ -40,10 +41,8 @@ special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
 buttons = []
 defs = []
 show_definitions = False
-words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the \
-industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to\
-                       make a type specimen book. It has survived not only five centuries, but also the leap into electronic\
-                        typesetting, remaining essentially unchanged.']}
+words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa', 'seks seks seks']}
+# words_used = {'seks': ['1', '11', '111', '1111', '11111']}
 loaded = True
 debug_mode = False
 moving_sprites = pg.sprite.Group()
@@ -64,6 +63,7 @@ class Button:
         self.bottom_color = DARK_GREY
         self.border_color = BLACK
         self.original = y
+        self.pressed = False
         if button_type == 4:
             defs.append(self)
         else:
@@ -79,7 +79,6 @@ class Button:
             if pg.mouse.get_pressed()[0]:
                 self.rect.y = self.bottom_rect.y
                 self.update_text()
-                # SCREEN.blit(BACKGROUND, (0, 0))
                 update_game_state()
                 self.button_action()
             else:
@@ -110,7 +109,7 @@ class Button:
             d.start()
         elif self.button_type == 2:
             # draw_definitions()
-            debug()
+            # debug()
             global show_definitions
             show_definitions = not show_definitions
 
@@ -124,16 +123,16 @@ class Definition(Button):
         self.btn_img = img
 
         # definition
-        self.number = number
+        self.number = str(number) + '. '
         self.word_used = word_used
         self.definitions = words_used.get(self.word_used)
         self.current_def = 0
         self.max_def = len(self.definitions) - 1
-        self.definition = self.definitions[self.current_def]
+        self.definition = self.number + self.definitions[self.current_def]
         self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
         self.height = 50
         self.width = 400
-        self.pos_y = self.rect.midright[1] - self.height/2
+        self.pos_y = self.rect.topright[1]
         self.pos_x = self.rect.x + 35
         self.def_rect = pg.Rect(self.pos_x, self.pos_y, self.width, self.height)
 
@@ -141,18 +140,49 @@ class Definition(Button):
         super().draw()
         SCREEN.blit(self.btn_img, (self.rect.x + 4, self.rect.y + 4))
 
-    def draw_def(self):
+    def draw_def(self, part, line_spacing):
+        print('draw_def poszlo z: ', part)
+        self.def_surface = DEF_FONT.render(part, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + line_spacing))
+
+    def wrap_def(self):
+        i = 0
+        text_width = self.def_rect.left
+        if DEF_FONT.size(f'{self.definition}')[0] < self.width:
+            return self.definition
+        else:
+            for letter in self.definition:
+                font_width = DEF_FONT.size(f'{letter}')[0]
+                text_width += font_width
+                if text_width >= self.def_rect.right:
+                    space = self.definition.rfind(" ", 0, i)
+                    part = self.definition[:space]
+                    self.definition = self.definition[space + 1:]
+                    return part
+                i += 1
+
+    def calc_def(self):
+        time.sleep(0.1)
         pg.draw.rect(SCREEN, self.border_color, self.def_rect, 2)
-        y = self.def_rect.top
-        line_spacing = -2
-        for letter in self.definition:
-            font_width = 0
-        font_height = DEF_FONT.size('T')[1]
-        print(font_height)
-        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
+        line_spacing = 2
+        if DEF_FONT.size(f'{self.definition}')[0] >= self.width*3:
+            self.next_definition()
+            self.calc_def()
+        elif DEF_FONT.size(f'{self.definition}')[0] > self.width*2:
+            self.draw_def(self.wrap_def(), line_spacing)
+            line_spacing += 13
+            self.draw_def(self.wrap_def(), line_spacing)
+            line_spacing += 13
+            self.draw_def(self.wrap_def(), line_spacing)
+        elif DEF_FONT.size(f'{self.definition}')[0] > self.width:
+            self.draw_def(self.wrap_def(), line_spacing)
+            line_spacing += 13
+            self.draw_def(self.wrap_def(), line_spacing)
+        else:
+            self.draw_def(self.wrap_def(), line_spacing)
 
     def next_definition(self):
-        if self.current_def >= self.max_def:
+        if self.current_def == self.max_def:
             self.current_def = 0
             self.definition = self.definitions[self.current_def]
         else:
@@ -163,19 +193,26 @@ class Definition(Button):
         super().button_action()
         if self.button_type == 4:
             self.next_definition()
-            self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
+            # self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
             update_game_state()
+            # time.sleep(0.1)
+            # for d in defs:
+            #     d.calc_def()
+            testowy.calc_def()
 
 
 
 
 
-# testowy = Definition(900, 50, 30, 30, 2, 1, 'seks')
-testowy2 = Definition(1350, 70, 30, 30, 2, 1, 'seks')
+
+
+testowy = Definition(900, 50, 30, 30, 2, 1, 'seks')
+# testowy2 = Definition(900, 105, 30, 30, 2, 1, 'seks')
+# testowy2 = Definition(1350, 70, 30, 30, 2, 1, 'seks')
 x = 70
-for i in range(15):
-    Definition(900, x, 30, 30, 2, 1, 'seks')
-    x += 55
+# for i in range(15):
+#     Definition(900, x, 30, 30, 2, 1, 'seks')
+#     x += 55
 print(defs)
 
 
@@ -619,7 +656,7 @@ def update_game_state():
     SCREEN.blit(BACKGROUND, (0, 0))
     draw_buttons()
     for d in defs:
-        d.draw_def()
+        # d.calc_def()
         d.draw()
     # draw_definitions()
 
@@ -651,7 +688,7 @@ def main():
     draw_grid(20, 20)
     # draw_buttons()
     done = False
-    # testowy.draw_def()
+    # testowy.calc_def()
 
     while not done:
         if loaded is False:
@@ -670,10 +707,11 @@ def main():
             for b in buttons:
                 b.button_event()
                 b.draw()
-            if show_definitions:
-                for d in defs:
-                    d.button_event()
-                    d.draw()
+        if show_definitions:
+            for d in defs:
+                d.draw()
+                d.button_event()
+
 
         for i in range(len(input_boxes)):
             for box in input_boxes[i]:
@@ -688,4 +726,4 @@ if __name__ == '__main__':
     main()
     pg.quit()
 
-# TODO: dodać przycisk do debug mode, który będzie włączał dodawanie słów strzałkami
+# TODO: dodać teraz scrapowanie definicji i tworzenie im obiektów klasy oraz żeby przypisywało każdej numerek
