@@ -39,10 +39,11 @@ vertical_number = 1
 special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
 # special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 buttons = []
-defs = []
+definitions = []
+crossword = 0
 show_definitions = False
-words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa', 'seks seks seks']}
-# words_used = {'seks': ['1', '11', '111', '1111', '11111']}
+# words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa', 'seks seks seks']}
+words_used = {}
 loaded = True
 debug_mode = False
 moving_sprites = pg.sprite.Group()
@@ -65,7 +66,7 @@ class Button:
         self.original = y
         self.pressed = False
         if button_type == 4:
-            defs.append(self)
+            definitions.append(self)
         else:
             buttons.append(self)
 
@@ -108,10 +109,8 @@ class Button:
             t.start()
             d.start()
         elif self.button_type == 2:
-            # draw_definitions()
-            # debug()
-            global show_definitions
-            show_definitions = not show_definitions
+            debug()
+            print(show_definitions)
 
 
 class Definition(Button):
@@ -124,11 +123,15 @@ class Definition(Button):
 
         # definition
         self.number = str(number) + '. '
+        self.number_surface = DEF_FONT.render(self.number, True, BLACK)
         self.word_used = word_used
         self.definitions = words_used.get(self.word_used)
         self.current_def = 0
         self.max_def = len(self.definitions) - 1
-        self.definition = self.number + self.definitions[self.current_def]
+        self.definition = self.definitions[self.current_def]
+        self.part1 = ''
+        self.part2 = ''
+        self.part3 = ''
         self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
         self.height = 50
         self.width = 400
@@ -140,10 +143,13 @@ class Definition(Button):
         super().draw()
         SCREEN.blit(self.btn_img, (self.rect.x + 4, self.rect.y + 4))
 
-    def draw_def(self, part, line_spacing):
-        print('draw_def poszlo z: ', part)
-        self.def_surface = DEF_FONT.render(part, True, BLACK)
-        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + line_spacing))
+    def draw_def(self):
+        self.def_surface = DEF_FONT.render(self.part1, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
+        self.def_surface = DEF_FONT.render(self.part2, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 15))
+        self.def_surface = DEF_FONT.render(self.part3, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 27))
 
     def wrap_def(self):
         i = 0
@@ -163,23 +169,36 @@ class Definition(Button):
 
     def calc_def(self):
         time.sleep(0.1)
-        pg.draw.rect(SCREEN, self.border_color, self.def_rect, 2)
+        # pg.draw.rect(SCREEN, self.border_color, self.def_rect, 2)
+        # SCREEN.blit(self.number_surface, (self.pos_x - 15, self.pos_y + 2))
         line_spacing = 2
         if DEF_FONT.size(f'{self.definition}')[0] >= self.width*3:
             self.next_definition()
             self.calc_def()
         elif DEF_FONT.size(f'{self.definition}')[0] > self.width*2:
-            self.draw_def(self.wrap_def(), line_spacing)
-            line_spacing += 13
-            self.draw_def(self.wrap_def(), line_spacing)
-            line_spacing += 13
-            self.draw_def(self.wrap_def(), line_spacing)
+            # self.draw_def(self.wrap_def(), line_spacing)
+            # line_spacing += 13
+            # self.draw_def(self.wrap_def(), line_spacing)
+            # line_spacing += 13
+            # self.draw_def(self.wrap_def(), line_spacing)
+            self.part1 = self.wrap_def()
+            self.part1 = self.number + self.part1
+            self.part2 = self.wrap_def()
+            self.part3 = self.wrap_def()
         elif DEF_FONT.size(f'{self.definition}')[0] > self.width:
-            self.draw_def(self.wrap_def(), line_spacing)
-            line_spacing += 13
-            self.draw_def(self.wrap_def(), line_spacing)
+            # self.draw_def(self.wrap_def(), line_spacing)
+            # line_spacing += 13
+            # self.draw_def(self.wrap_def(), line_spacing)
+            self.part1 = self.wrap_def()
+            self.part1 = self.number + self.part1
+            self.part2 = self.wrap_def()
+            self.part3 = ''
         else:
-            self.draw_def(self.wrap_def(), line_spacing)
+            # self.draw_def(self.wrap_def(), line_spacing)
+            self.part1 = self.wrap_def()
+            self.part1 = self.number + self.part1
+            self.part2 = ''
+            self.part3 = ''
 
     def next_definition(self):
         if self.current_def == self.max_def:
@@ -194,26 +213,12 @@ class Definition(Button):
         if self.button_type == 4:
             self.next_definition()
             # self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
-            update_game_state()
+            # update_game_state()
             # time.sleep(0.1)
-            # for d in defs:
+            # for d in definitions:
             #     d.calc_def()
-            testowy.calc_def()
-
-
-
-
-
-
-
-testowy = Definition(900, 50, 30, 30, 2, 1, 'seks')
-# testowy2 = Definition(900, 105, 30, 30, 2, 1, 'seks')
-# testowy2 = Definition(1350, 70, 30, 30, 2, 1, 'seks')
-x = 70
-# for i in range(15):
-#     Definition(900, x, 30, 30, 2, 1, 'seks')
-#     x += 55
-print(defs)
+            self.calc_def()
+            update_game_state()
 
 
 class Box:
@@ -543,6 +548,7 @@ def fill_the_grid():
 
 
 def crossword_1():
+    global crossword
     clear()
     final_word = get_random_word(18)
     place_word(input_boxes, 1, 10, final_word, True)
@@ -579,9 +585,10 @@ def crossword_1():
             if box.secret_text == '':
                 box.is_dead = True
     quit_driver()
-    loading(False)
-    update_game_state()
     draw_definitions()
+    loading(False)
+    crossword = 1
+    update_game_state()
 
 
 def crossword_2():
@@ -609,11 +616,14 @@ def clear():
     global vertical_number
     global horizontal_number
     global words_used
+    global definitions
+    SCREEN.blit(BACKGROUND, (0, 0))
     input_boxes = []
     draw_grid(20, 20)
     vertical_number = 1
     horizontal_number = 1
     words_used = {}
+    definitions = []
 
 
 def add_definitions(word):
@@ -625,39 +635,51 @@ def add_definitions(word):
         return True
 
 
+def draw_headers():
+    if crossword == 1:
+        crossword1_header = FONT.render('Poziomo:', True, BLACK)
+        SCREEN.blit(crossword1_header, (900, 30))
+    if crossword == 2:
+        crossword1_header = FONT.render('Poziomo:', True, BLACK)
+        crossword2_header = FONT.render('Poziomo:', True, BLACK)
+        SCREEN.blit(crossword1_header, (900, 30))
+        SCREEN.blit(crossword2_header, (1500, 30))
+
+
 def draw_definitions():
-    horizontal_x = 920
-    vertical_x = 1420
-    y = 30
+    x = 900
+    y = 70
+    original_y = 70
+    spacing = 55
+    button_size = 30
+    elevation = 2
     number = 1
-    poziomo = FONT.render('Poziomo:', True, BLACK)
-    pionowo = FONT.render('Pionowo:', True, BLACK)
-    SCREEN.blit(poziomo, (horizontal_x, y))
-    SCREEN.blit(pionowo, (vertical_x, y))
     for word in words_used:
-        definitions_list = words_used.get(word)
-        definition = definitions_list[0]
-        if len(definition) > 55:
-            def_part1 = definition[0:55] + '-'
-            def_part2 = definition[55:]
-            definition_text1 = DEF_FONT.render(f'{number}: ' + def_part1, True, BLACK)
-            definition_text2 = DEF_FONT.render('    ' + def_part2, True, BLACK)
-            SCREEN.blit(definition_text1, (horizontal_x, y + 50))
-            SCREEN.blit(definition_text2, (horizontal_x, y + 66))
+        if number > 15:
+            x = 1350
+            Definition(x, original_y, button_size, button_size, elevation, number, word)
+            original_y += spacing
+            number += 1
         else:
-            definition_text = DEF_FONT.render(f'{number}: ' + definition, True, BLACK)
-            SCREEN.blit(definition_text, (horizontal_x, y + 50))
-        y += 35
-        number += 1
+            Definition(x, y, button_size, button_size, elevation, number, word)
+            y += spacing
+            number += 1
+
+    for d in definitions:
+        d.calc_def()
     loading(False)
+    update_game_state()
+    global show_definitions
+    show_definitions = True
 
 
 def update_game_state():
     SCREEN.blit(BACKGROUND, (0, 0))
     draw_buttons()
-    for d in defs:
-        # d.calc_def()
+    for d in definitions:
+        d.draw_def()
         d.draw()
+    draw_headers()
     # draw_definitions()
 
 
@@ -686,9 +708,7 @@ def debug():
 def main():
     clock = pg.time.Clock()
     draw_grid(20, 20)
-    # draw_buttons()
     done = False
-    # testowy.calc_def()
 
     while not done:
         if loaded is False:
@@ -708,7 +728,7 @@ def main():
                 b.button_event()
                 b.draw()
         if show_definitions:
-            for d in defs:
+            for d in definitions:
                 d.draw()
                 d.button_event()
 

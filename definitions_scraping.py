@@ -6,8 +6,7 @@ from selenium.webdriver.common.keys import Keys
 
 
 options = Options()
-options.headless = False
-
+options.headless = True
 
 
 def check_definitions_exists():
