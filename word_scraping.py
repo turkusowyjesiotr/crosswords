@@ -1,12 +1,14 @@
 from selenium import webdriver
 import csv
 from selenium.webdriver.common.by import By
-
+from dataclasses import dataclass
 
 
 alphabet = {'a': 8831, 'b': 10268, 'c': 7997, 'd': 9714, 'e': 3963, 'f': 4608, 'g': 6781, 'h': 4198, 'i': 3066, 'j': 3277, 'k': 16137,
             'l': 4962, 'm': 11647, 'n': 9430, 'o': 9040, 'p': 28125, 'r': 9007, 's': 18932, 't': 7975, 'u': 3696, 'w': 12958, 'z': 9366}
 special_chars = {'ć': 128, 'ó': 15, 'ł': 1562, 'ś': 1620, 'ź': 56, 'ż': 1453}
+
+
 def scrape_letter(dict, letter):
     word_list = []
     count = 0
@@ -27,6 +29,8 @@ def scrape_letter(dict, letter):
         writer.writerow(word_list)
 
 
+# uncomment if you want to populate words.csv and special_chars.csv with data
+
 # for key in alphabet:
 #     scrape_letter(alphabet, key)
 # for key in special_chars:
@@ -35,39 +39,9 @@ def scrape_letter(dict, letter):
 
 input_special_chars = open('C:/Users/X/PycharmProjects/pythonProject/crosswords/special_chars.csv', "r", encoding='UTF8')
 reader_special_chars = csv.reader(input_special_chars)
-words_c_pl = next(reader_special_chars)
-words_o_pl = next(reader_special_chars)
-words_l_pl = next(reader_special_chars)
-words_s_pl = next(reader_special_chars)
-words_x_pl = next(reader_special_chars)
-words_z_pl = next(reader_special_chars)
 
 input_file = open('C:/Users/X/PycharmProjects/pythonProject/crosswords/words.csv', "r", encoding='UTF8')
 reader_file = csv.reader(input_file)
-words_a = next(reader_file)
-words_b = next(reader_file)
-words_c = next(reader_file)
-words_d = next(reader_file)
-words_e = next(reader_file)
-words_f = next(reader_file)
-words_g = next(reader_file)
-words_h = next(reader_file)
-words_i = next(reader_file)
-words_j = next(reader_file)
-words_k = next(reader_file)
-words_l = next(reader_file)
-words_m = next(reader_file)
-words_n = next(reader_file)
-words_o = next(reader_file)
-words_p = next(reader_file)
-words_r = next(reader_file)
-words_s = next(reader_file)
-words_t = next(reader_file)
-words_u = next(reader_file)
-words_w = next(reader_file)
-words_z = next(reader_file)
-print(len(words_a + words_b + words_c + words_d + words_e + words_f + words_g + words_h + words_i + words_j + words_k + words_l + words_m + words_n + words_o
-          + words_p + words_r + words_s + words_t + words_u + words_w + words_z))
 
 
 def check_words_length(array):
@@ -97,9 +71,36 @@ with open('words.csv', 'r', encoding='UTF8') as file:
                         words_n_pl.append(word)
 
 
-
-
-
-
-
-
+@dataclass
+class Words:
+    words_a = next(reader_file)
+    words_b = next(reader_file)
+    words_c = next(reader_file)
+    words_d = next(reader_file)
+    words_e = next(reader_file)
+    words_f = next(reader_file)
+    words_g = next(reader_file)
+    words_h = next(reader_file)
+    words_i = next(reader_file)
+    words_j = next(reader_file)
+    words_k = next(reader_file)
+    words_l = next(reader_file)
+    words_m = next(reader_file)
+    words_n = next(reader_file)
+    words_o = next(reader_file)
+    words_p = next(reader_file)
+    words_r = next(reader_file)
+    words_s = next(reader_file)
+    words_t = next(reader_file)
+    words_u = next(reader_file)
+    words_w = next(reader_file)
+    words_z = next(reader_file)
+    words_c_pl = next(reader_special_chars)
+    words_o_pl = next(reader_special_chars)
+    words_l_pl = next(reader_special_chars)
+    words_s_pl = next(reader_special_chars)
+    words_x_pl = next(reader_special_chars)
+    words_z_pl = next(reader_special_chars)
+    words_a_pl = words_a_pl
+    words_e_pl = words_e_pl
+    words_n_pl = words_n_pl

@@ -1,8 +1,5 @@
 import pygame as pg
-from word_scraping import words_a, words_b, words_c, words_d, words_e, words_f, words_g, words_h, words_i, words_j, \
-    words_k, words_l, words_m, words_n, words_o, words_p, words_r, words_s, words_t, words_u, words_w, words_z, \
-    words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl, words_a_pl, words_e_pl, \
-    words_n_pl
+from word_scraping import Words
 from definitions_scraping import scrape_definitions
 import hourglass
 import random
@@ -36,7 +33,7 @@ DEF_FONT = pg.font.Font('assets/fonts/arial.ttf', 15)
 LOADING_FONT = pg.font.Font('assets/fonts/arial_bold.ttf', 40)
 horizontal_number = 1
 vertical_number = 1
-special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż']
+special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż', 'Y', 'X', 'V']
 # special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 buttons = []
 definitions = []
@@ -111,7 +108,6 @@ class Button:
             d.start()
         elif self.button_type == 2:
             debug()
-            print(show_definitions)
 
 
 class Definition(Button):
@@ -146,12 +142,16 @@ class Definition(Button):
         SCREEN.blit(self.btn_img, (self.rect.x + 4, self.rect.y + 4))
 
     def draw_def(self):
-        self.def_surface = DEF_FONT.render(self.part1, True, BLACK)
-        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
-        self.def_surface = DEF_FONT.render(self.part2, True, BLACK)
-        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 15))
-        self.def_surface = DEF_FONT.render(self.part3, True, BLACK)
-        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 27))
+        try:
+            print('draw_def ',self.part1, f'word:{self.word_used}')
+            self.def_surface = DEF_FONT.render(self.part1, True, BLACK)
+            SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
+            self.def_surface = DEF_FONT.render(self.part2, True, BLACK)
+            SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 15))
+            self.def_surface = DEF_FONT.render(self.part3, True, BLACK)
+            SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 27))
+        except AttributeError:
+            self.part1 = 'xxx'
 
     def wrap_def(self):
         i = 0
@@ -171,32 +171,20 @@ class Definition(Button):
 
     def calc_def(self):
         time.sleep(0.1)
-        # pg.draw.rect(SCREEN, self.border_color, self.def_rect, 2)
-        # SCREEN.blit(self.number_surface, (self.pos_x - 15, self.pos_y + 2))
-        line_spacing = 2
         if DEF_FONT.size(f'{self.definition}')[0] >= self.width*3:
             self.next_definition()
             self.calc_def()
         elif DEF_FONT.size(f'{self.definition}')[0] > self.width*2:
-            # self.draw_def(self.wrap_def(), line_spacing)
-            # line_spacing += 13
-            # self.draw_def(self.wrap_def(), line_spacing)
-            # line_spacing += 13
-            # self.draw_def(self.wrap_def(), line_spacing)
             self.part1 = self.wrap_def()
             self.part1 = self.number + self.part1
             self.part2 = self.wrap_def()
             self.part3 = self.wrap_def()
         elif DEF_FONT.size(f'{self.definition}')[0] > self.width:
-            # self.draw_def(self.wrap_def(), line_spacing)
-            # line_spacing += 13
-            # self.draw_def(self.wrap_def(), line_spacing)
             self.part1 = self.wrap_def()
             self.part1 = self.number + self.part1
             self.part2 = self.wrap_def()
             self.part3 = ''
         else:
-            # self.draw_def(self.wrap_def(), line_spacing)
             self.part1 = self.wrap_def()
             self.part1 = self.number + self.part1
             self.part2 = ''
@@ -214,11 +202,6 @@ class Definition(Button):
         super().button_action()
         if self.button_type == 4:
             self.next_definition()
-            # self.def_surface = DEF_FONT.render(self.definition, True, BLACK)
-            # update_game_state()
-            # time.sleep(0.1)
-            # for d in definitions:
-            #     d.calc_def()
             self.calc_def()
             update_game_state()
 
@@ -256,7 +239,6 @@ class Box:
                     self.active = not self.active
                 else:
                     self.active = False
-                # self.color = BLUE if self.active else WHITE
                 if self.final:
                     self.color = GOLD
                 if not self.active and not self.final:
@@ -374,11 +356,11 @@ def is_empty_simple(array, row, col, word, is_vertical: bool):
 def is_empty(array, row, col, word, is_vertical: bool):
     if word is not None:
         length = len(word)
-        empty_boxes = 1
-        if not is_vertical and col + length > len(array[row]):
+        empty_boxes = 0
+        if not is_vertical and col + length + 1 > len(array[row]):
             return False
 
-        if is_vertical and row + length > len(array):
+        if is_vertical and row + length + 1 > len(array):
             return False
 
         else:
@@ -402,7 +384,7 @@ def is_empty(array, row, col, word, is_vertical: bool):
                     x = True if array[row][col + 1].secret_text == '' else False
                     y = True if array[row][col + 1].is_dead is False else False
                     z = True if array[row + 1][col + 1].secret_text == '' else False
-                    v = True if array[row - 1][col - 1].secret_text == '' else False
+                    v = True if array[row - 1][col + 1].secret_text == '' else False
                     temp = [x, y, z, v]
                     # if array[row][col + 1].secret_text == '' and array[row][col + 1].is_dead is False:
                     if all(temp):
@@ -425,137 +407,45 @@ def get_word(array, length):
 
 def get_word_special_chars(letter):
     if letter == 'ą':
-        return random.choice(words_a_pl)
+        return random.choice(Words.words_a_pl)
     if letter == 'ę':
-        return random.choice(words_e_pl)
+        return random.choice(Words.words_e_pl)
     if letter == 'ń':
-        return random.choice(words_n_pl)
+        return random.choice(Words.words_n_pl)
     if letter == 'ć':
-        return random.choice(words_c_pl)
+        return random.choice(Words.words_c_pl)
     if letter == 'ó':
-        return random.choice(words_o_pl)
+        return random.choice(Words.words_o_pl)
     if letter == 'ł':
-        return random.choice(words_l_pl)
+        return random.choice(Words.words_l_pl)
     if letter == 'ś':
-        return random.choice(words_s_pl)
+        return random.choice(Words.words_s_pl)
     if letter == 'ź':
-        return random.choice(words_x_pl)
+        return random.choice(Words.words_x_pl)
     if letter == 'ż':
-        return random.choice(words_z_pl)
+        return random.choice(Words.words_z_pl)
 
 
 def get_word_from_letter(row, column, length):
     letter = input_boxes[row][column].secret_text
+    print(letter)
     global special_chars
     if letter in special_chars:
+        return False
+    elif letter == '':
         return None
-    if letter == 'A':
-        return get_word(words_a, length)
-    if letter == 'B':
-        return get_word(words_b, length)
-    if letter == 'C':
-        return get_word(words_c, length)
-    if letter == 'D':
-        return get_word(words_d, length)
-    if letter == 'E':
-        return get_word(words_e, length)
-    if letter == 'F':
-        return get_word(words_f, length)
-    if letter == 'G':
-        return get_word(words_g, length)
-    if letter == 'H':
-        return get_word(words_h, length)
-    if letter == 'I':
-        return get_word(words_i, length)
-    if letter == 'J':
-        return get_word(words_j, length)
-    if letter == 'K':
-        return get_word(words_k, length)
-    if letter == 'L':
-        return get_word(words_l, length)
-    if letter == 'M':
-        return get_word(words_m, length)
-    if letter == 'N':
-        return get_word(words_n, length)
-    if letter == 'O':
-        return get_word(words_o, length)
-    if letter == 'U':
-        return get_word(words_u, length)
-    if letter == 'P':
-        return get_word(words_p, length)
-    if letter == 'R':
-        return get_word(words_r, length)
-    if letter == 'S':
-        return get_word(words_s, length)
-    if letter == 'T':
-        return get_word(words_t, length)
-    if letter == 'U':
-        return get_word(words_u, length)
-    if letter == 'W':
-        return get_word(words_w, length)
-    if letter == 'Z':
-        return get_word(words_z, length)
+    else:
+        letter = letter.lower()
+        return get_word(eval(f'Words.words_{letter}'), length)
 
 
 def get_random_word(length):
     word = None
     while word is None:
-        letter = random.choice(string.ascii_uppercase)
-        if letter == 'A':
-            word = get_word(words_a, length)
-        if letter == 'B':
-            word = get_word(words_b, length)
-        if letter == 'C':
-            word = get_word(words_c, length)
-        if letter == 'D':
-            word = get_word(words_d, length)
-        if letter == 'E':
-            word = get_word(words_e, length)
-        if letter == 'F':
-            word = get_word(words_f, length)
-        if letter == 'G':
-            word = get_word(words_g, length)
-        if letter == 'H':
-            word = get_word(words_h, length)
-        if letter == 'I':
-            word = get_word(words_i, length)
-        if letter == 'J':
-            word = get_word(words_j, length)
-        if letter == 'K':
-            word = get_word(words_k, length)
-        if letter == 'L':
-            word = get_word(words_l, length)
-        if letter == 'M':
-            word = get_word(words_m, length)
-        if letter == 'N':
-            word = get_word(words_n, length)
-        if letter == 'O':
-            word = get_word(words_o, length)
-        if letter == 'U':
-            word = get_word(words_u, length)
-        if letter == 'P':
-            word = get_word(words_p, length)
-        if letter == 'R':
-            word = get_word(words_r, length)
-        if letter == 'S':
-            word = get_word(words_s, length)
-        if letter == 'T':
-            word = get_word(words_t, length)
-        if letter == 'U':
-            word = get_word(words_u, length)
-        if letter == 'W':
-            word = get_word(words_w, length)
-        if letter == 'Z':
-            word = get_word(words_z, length)
+        letter = random.choice(string.ascii_lowercase)
+        if letter not in ['q', 'v', 'x', 'y']:
+            word = get_word(eval(f'Words.words_{letter}'), length)
     return word
-
-
-def fill_the_grid():
-    word = get_word(words_z, 15)
-    place_word(input_boxes, 0, 0, word, False)
-    place_word(input_boxes, 0, 0, get_word(words_z, 13), True)
-    place_word(input_boxes, 0, 6, get_word_from_letter(0, 6, 10), True)
-    place_word(input_boxes, 8, 6, get_word_from_letter(8, 6, 7), False)
 
 
 def crossword_1():
@@ -583,7 +473,6 @@ def crossword_1():
                     if is_empty_simple(input_boxes, row, column, word, False) is True and add_definitions(word, False) is True:
                         place_word(input_boxes, row, column, word, False)
                         row += 1
-                        print(words_used)
                         word_placed = True
                         break
                     else:
@@ -603,37 +492,55 @@ def crossword_1():
 # TODO: BURDEL TEN NAPRAWIC XD
 def crossword_2():
     global crossword
+    global special_chars
     clear()
     first_placed = False
     word_placed = False
     occupied_boxes = []
     while not first_placed:
-        x = random.randint(0, 1)
-        y = random.randint(0, 1)
+        row = random.randint(0, 1)
+        col = random.randint(0, 1)
         z = bool(random.getrandbits(1))
         z = True
         first_word = get_random_word(random.randint(6, 15))
         if add_definitions(first_word, z) is True:
-            place_word(input_boxes, x, y, first_word, z)
-            first_placed = True
+            place_word(input_boxes, row, col, first_word, z)
             print(words_used)
-            occupied_boxes.append(get_occupied_boxes(x, y, len(first_word), z))
+            occupied_boxes = get_occupied_boxes(row, col, len(first_word), z)
+            first_placed = True
+            print(occupied_boxes)
     while not word_placed:
         print(len(occupied_boxes))
-        box = random.choice(occupied_boxes[random.randint(0, len(occupied_boxes) - 1)])
-        word = get_word_from_letter(box[0], box[1], random.randint(6, 15))
-        print(box)
-        print(word)
-        if is_empty(input_boxes, box[0], box[1], word, False) is True and add_definitions(word, False) is True:
-            place_word(input_boxes, box[0], box[1], word, False)
-            occupied_boxes.append(get_occupied_boxes(box[0], box[1], len(word), False))
-            continue
+        box = random.choice(occupied_boxes)
+        print('box=',box)
+        if input_boxes[box[0]][box[1]].secret_text not in special_chars:
+            word = get_word_from_letter(box[0], box[1], random.randint(4, 10))
+            print(box)
+            print(word)
+            time.sleep(0.1)
+            print('poziomo: ',is_empty(input_boxes, box[0], box[1], word, False))
+            print('pionowo: ',is_empty(input_boxes, box[0], box[1], word, True))
+            if is_empty(input_boxes, box[0], box[1], word, False) is True:
+                print(f'weszlo na {box[0], box[1]} poziomo')
+                if add_definitions(word, False) is True:
+                    place_word(input_boxes, box[0], box[1], word, False)
+                    temp = get_occupied_boxes(box[0], box[1], len(word), False)
+                    for i in temp:
+                        occupied_boxes.append(i)
+
+                # word_placed = True
+            if is_empty(input_boxes, box[0], box[1], word, True) is True:
+                print(f'weszlo na {box[0], box[1]} pionowo')
+                if add_definitions(word, True) is True:
+                    place_word(input_boxes, box[0], box[1], word, True)
+                    temp = get_occupied_boxes(box[0], box[1], len(word), True)
+                    for i in temp:
+                        occupied_boxes.append(i)
+
+            else:
+                print('nie pasuje nigdzie?!')
             # word_placed = True
-        elif is_empty(input_boxes, box[0], box[1], word, True) is True and add_definitions(word, True) is True:
-            place_word(input_boxes, box[0], box[1], word, True)
-            occupied_boxes.append(get_occupied_boxes(box[0], box[1], len(word), True))
-            continue
-            # word_placed = True
+        print(occupied_boxes)
     # while not word_placed:
 
     draw_definitions()
@@ -642,18 +549,19 @@ def crossword_2():
     update_game_state()
 
 
-def get_occupied_boxes(x, y, length, is_vertical):
+def get_occupied_boxes(row, col, length, is_vertical):
     occupied_boxes = []
+    coords = []
     if is_vertical:
         for i in range(length):
-            coords = [x, y + i]
-            occupied_boxes.append(coords)
-        return occupied_boxes
+            coords.append([row + i, col])
+        # occupied_boxes.append(coords)
+        return coords
     if not is_vertical:
         for i in range(length):
-            coords = [x + i, y]
-            occupied_boxes.append(coords)
-        return occupied_boxes
+            coords.append([row, col + i])
+        # occupied_boxes.append(coords)
+        return coords
 
 
 def clear():
@@ -783,11 +691,11 @@ def main():
             for b in buttons:
                 b.button_event()
                 b.draw()
+
         if show_definitions:
             for d in definitions:
                 d.draw()
                 d.button_event()
-
 
         for i in range(len(input_boxes)):
             for box in input_boxes[i]:
@@ -797,8 +705,6 @@ def main():
         clock.tick(30)
 
 
-
 if __name__ == '__main__':
     main()
     pg.quit()
-
