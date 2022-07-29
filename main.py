@@ -3,7 +3,7 @@ from word_scraping import words_a, words_b, words_c, words_d, words_e, words_f, 
     words_k, words_l, words_m, words_n, words_o, words_p, words_r, words_s, words_t, words_u, words_w, words_z, \
     words_c_pl, words_o_pl, words_l_pl, words_s_pl, words_x_pl, words_z_pl, words_a_pl, words_e_pl, \
     words_n_pl
-from definitions_scraping import scrape_definitions, quit_driver
+from definitions_scraping import scrape_definitions
 import hourglass
 import random
 import string
@@ -44,6 +44,7 @@ crossword = 0
 show_definitions = False
 # words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa', 'seks seks seks']}
 words_used = {}
+words_used_vertical = {}
 loaded = True
 debug_mode = False
 moving_sprites = pg.sprite.Group()
@@ -114,7 +115,7 @@ class Button:
 
 
 class Definition(Button):
-    def __init__(self, x, y, width, height, elevation, number, word_used, text='', button_type=4):
+    def __init__(self, x, y, width, height, elevation, number, word_used, words_dict, text='', button_type=4):
         # button
         super().__init__(x, y, width, height, elevation, text, button_type)
         img = pg.image.load('assets/images/load.png')
@@ -125,7 +126,8 @@ class Definition(Button):
         self.number = str(number) + '. '
         self.number_surface = DEF_FONT.render(self.number, True, BLACK)
         self.word_used = word_used
-        self.definitions = words_used.get(self.word_used)
+        self.words_dict = words_dict
+        self.definitions = words_dict.get(self.word_used)
         self.current_def = 0
         self.max_def = len(self.definitions) - 1
         self.definition = self.definitions[self.current_def]
@@ -354,14 +356,11 @@ def place_word(array, row, col, word, is_vertical):
             array[row + i_count][col].is_dead = True
     if word is None:
         print('NoneObject passed')
-# TODO: rozpisać sobie na kartce logikę is_empty, żeby sprawdzało czy po kolejnym boxie po słowie jest is_dead (jeśli tak, to umieść słowo) \
-#  i żeby sprawdzało czy po bokach słowa nie ma innych słów \
-#  i perhaps czy są jakieś przecinające się słówka
 
-def is_empty_test(array, row, col, word, is_vertical: bool):
+
+def is_empty_simple(array, row, col, word, is_vertical: bool):
     if word is not None:
         length = len(word) + 1
-        empty_boxes = 1
         if not is_vertical and col + length < len(array[row]):
             return True
 
@@ -385,7 +384,13 @@ def is_empty(array, row, col, word, is_vertical: bool):
         else:
             if is_vertical:
                 for i in range(length):
-                    if array[row + 1][col].text == '' and array[row + 1][col].is_dead is False:
+                    x = True if array[row + 1][col].secret_text == '' else False
+                    y = True if array[row + 1][col].is_dead is False else False
+                    z = True if array[row + 1][col + 1].secret_text == '' else False
+                    v = True if array[row + 1][col - 1].secret_text == '' else False
+                    temp = [x, y, z, v]
+                    # if array[row + 1][col].secret_text == '' and array[row + 1][col].is_dead is False:
+                    if all(temp):
                         empty_boxes += 1
                         row += 1
                         if empty_boxes == length:
@@ -394,7 +399,13 @@ def is_empty(array, row, col, word, is_vertical: bool):
                         return False
             if not is_vertical:
                 for i in range(length):
-                    if array[row][col + 1].text == '' and array[row][col + 1].is_dead is False:
+                    x = True if array[row][col + 1].secret_text == '' else False
+                    y = True if array[row][col + 1].is_dead is False else False
+                    z = True if array[row + 1][col + 1].secret_text == '' else False
+                    v = True if array[row - 1][col - 1].secret_text == '' else False
+                    temp = [x, y, z, v]
+                    # if array[row][col + 1].secret_text == '' and array[row][col + 1].is_dead is False:
+                    if all(temp):
                         empty_boxes += 1
                         col += 1
                         if empty_boxes == length:
@@ -434,7 +445,7 @@ def get_word_special_chars(letter):
 
 
 def get_word_from_letter(row, column, length):
-    letter = input_boxes[row][column].text
+    letter = input_boxes[row][column].secret_text
     global special_chars
     if letter in special_chars:
         return None
@@ -569,7 +580,7 @@ def crossword_1():
             for letter in word:
                 if letter == letter_final:
                     column = col - int(word.index(letter_final))
-                    if is_empty_test(input_boxes, row, column, word, False) is True and add_definitions(word) is True:
+                    if is_empty_simple(input_boxes, row, column, word, False) is True and add_definitions(word, False) is True:
                         place_word(input_boxes, row, column, word, False)
                         row += 1
                         print(words_used)
@@ -584,31 +595,65 @@ def crossword_1():
         for box in input_boxes[i]:
             if box.secret_text == '':
                 box.is_dead = True
-    quit_driver()
     draw_definitions()
     loading(False)
     crossword = 1
     update_game_state()
 
-
+# TODO: BURDEL TEN NAPRAWIC XD
 def crossword_2():
+    global crossword
     clear()
     first_placed = False
+    word_placed = False
+    occupied_boxes = []
     while not first_placed:
         x = random.randint(0, 1)
         y = random.randint(0, 1)
         z = bool(random.getrandbits(1))
+        z = True
         first_word = get_random_word(random.randint(6, 15))
-        if add_definitions(first_word) is True:
+        if add_definitions(first_word, z) is True:
             place_word(input_boxes, x, y, first_word, z)
             first_placed = True
             print(words_used)
-        else:
+            occupied_boxes.append(get_occupied_boxes(x, y, len(first_word), z))
+    while not word_placed:
+        print(len(occupied_boxes))
+        box = random.choice(occupied_boxes[random.randint(0, len(occupied_boxes) - 1)])
+        word = get_word_from_letter(box[0], box[1], random.randint(6, 15))
+        print(box)
+        print(word)
+        if is_empty(input_boxes, box[0], box[1], word, False) is True and add_definitions(word, False) is True:
+            place_word(input_boxes, box[0], box[1], word, False)
+            occupied_boxes.append(get_occupied_boxes(box[0], box[1], len(word), False))
             continue
-    quit_driver()
-    loading(False)
-    update_game_state()
+            # word_placed = True
+        elif is_empty(input_boxes, box[0], box[1], word, True) is True and add_definitions(word, True) is True:
+            place_word(input_boxes, box[0], box[1], word, True)
+            occupied_boxes.append(get_occupied_boxes(box[0], box[1], len(word), True))
+            continue
+            # word_placed = True
+    # while not word_placed:
+
     draw_definitions()
+    loading(False)
+    crossword = 2
+    update_game_state()
+
+
+def get_occupied_boxes(x, y, length, is_vertical):
+    occupied_boxes = []
+    if is_vertical:
+        for i in range(length):
+            coords = [x, y + i]
+            occupied_boxes.append(coords)
+        return occupied_boxes
+    if not is_vertical:
+        for i in range(length):
+            coords = [x + i, y]
+            occupied_boxes.append(coords)
+        return occupied_boxes
 
 
 def clear():
@@ -616,55 +661,67 @@ def clear():
     global vertical_number
     global horizontal_number
     global words_used
+    global words_used_vertical
     global definitions
+    global crossword
     SCREEN.blit(BACKGROUND, (0, 0))
     input_boxes = []
     draw_grid(20, 20)
     vertical_number = 1
     horizontal_number = 1
     words_used = {}
+    words_used_vertical = {}
     definitions = []
+    crossword = 0
 
 
-def add_definitions(word):
+def add_definitions(word, is_vertical):
     value = scrape_definitions(word)
     if not value:
         return False
     else:
-        words_used.update({word: value})
-        return True
+        if not is_vertical:
+            words_used.update({word: value})
+            return True
+        else:
+            words_used_vertical.update({word: value})
+            return True
 
 
 def draw_headers():
     if crossword == 1:
-        crossword1_header = FONT.render('Poziomo:', True, BLACK)
-        SCREEN.blit(crossword1_header, (900, 30))
+        horizontal_header = FONT.render('Poziomo:', True, BLACK)
+        SCREEN.blit(horizontal_header, (900, 30))
     if crossword == 2:
-        crossword1_header = FONT.render('Poziomo:', True, BLACK)
-        crossword2_header = FONT.render('Poziomo:', True, BLACK)
-        SCREEN.blit(crossword1_header, (900, 30))
-        SCREEN.blit(crossword2_header, (1500, 30))
+        horizontal_header = FONT.render('Poziomo:', True, BLACK)
+        vertical_header = FONT.render('Pionowo:', True, BLACK)
+        SCREEN.blit(horizontal_header, (900, 30))
+        SCREEN.blit(vertical_header, (1500, 30))
 
 
 def draw_definitions():
     x = 900
     y = 70
-    original_y = 70
+    vertical_y = 70
+    vertical_x = 1350
     spacing = 55
     button_size = 30
     elevation = 2
     number = 1
+    number_vertical = 1
     for word in words_used:
         if number > 15:
-            x = 1350
-            Definition(x, original_y, button_size, button_size, elevation, number, word)
-            original_y += spacing
+            Definition(vertical_x, vertical_y, button_size, button_size, elevation, number, word, words_used)
+            vertical_y += spacing
             number += 1
         else:
-            Definition(x, y, button_size, button_size, elevation, number, word)
+            Definition(x, y, button_size, button_size, elevation, number, word, words_used)
             y += spacing
             number += 1
-
+    for word in words_used_vertical:
+        Definition(vertical_x, vertical_y, button_size, button_size, elevation, number_vertical, word, words_used_vertical)
+        vertical_y += spacing
+        number_vertical += 1
     for d in definitions:
         d.calc_def()
     loading(False)
@@ -680,7 +737,6 @@ def update_game_state():
         d.draw_def()
         d.draw()
     draw_headers()
-    # draw_definitions()
 
 
 button0 = Button(125, 810, 150, 75, 4, 'Crossword #1', 0)
@@ -746,4 +802,3 @@ if __name__ == '__main__':
     main()
     pg.quit()
 
-# TODO: dodać teraz scrapowanie definicji i tworzenie im obiektów klasy oraz żeby przypisywało każdej numerek
