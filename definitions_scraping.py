@@ -28,7 +28,7 @@ def check_button_exists():
 
 
 def scrape_definitions(word):
-    driver = webdriver.Chrome('C:/Users/X/Desktop/chromedriver.exe', options=options)
+    driver = webdriver.Chrome('assets/driver/chromedriver.exe', options=options)
     driver.get(f'http://wordlist.eu/slowo/{word}')
     # if check_button_exists() is True:
     #     html = driver.find_element(By.TAG_NAME, 'html')
@@ -44,8 +44,3 @@ def scrape_definitions(word):
     else:
         driver.quit()
         return definitions
-
-
-def quit_driver():
-    pass
-

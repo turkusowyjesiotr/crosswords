@@ -14,7 +14,7 @@ def scrape_letter(dict, letter):
     count = 0
     max_count = dict[letter]
     while count < max_count:
-        driver = webdriver.Chrome('C:/Users/X/Desktop/chromedriver.exe')
+        driver = webdriver.Chrome('assets/driver/chromedriver.exe')
         driver.get(f'http://wordlist.eu/slowa/na-litere,{letter}/{count}')
         elem = driver.find_elements(By.XPATH, '//html/body/div[1]/main/div/div/div[2]/div[1]/ul')
         elem_list = [el.text for el in elem]
@@ -24,7 +24,7 @@ def scrape_letter(dict, letter):
                 word_list.append(word)
         driver.quit()
         count += 140
-    with open('C:/Users/X/PycharmProjects/pythonProject/crosswords/special_chars.csv', "a", encoding='UTF8') as csv_file:
+    with open('assets/words/words.csv', "a", encoding='UTF8') as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(word_list)
 
@@ -37,10 +37,10 @@ def scrape_letter(dict, letter):
 #     scrape_letter(special_chars, key)
 
 
-input_special_chars = open('C:/Users/X/PycharmProjects/pythonProject/crosswords/special_chars.csv', "r", encoding='UTF8')
+input_special_chars = open('assets/words/special_chars.csv', "r", encoding='UTF8')
 reader_special_chars = csv.reader(input_special_chars)
 
-input_file = open('C:/Users/X/PycharmProjects/pythonProject/crosswords/words.csv', "r", encoding='UTF8')
+input_file = open('assets/words/words.csv', "r", encoding='UTF8')
 reader_file = csv.reader(input_file)
 
 
@@ -56,7 +56,7 @@ words_with_aen = []
 words_a_pl = []
 words_e_pl = []
 words_n_pl = []
-with open('words.csv', 'r', encoding='UTF8') as file:
+with open('assets/words/words.csv', 'r', encoding='UTF8') as file:
     reader = csv.reader(file)
     for row in reader:
         for word in row:

@@ -34,12 +34,10 @@ LOADING_FONT = pg.font.Font('assets/fonts/arial_bold.ttf', 40)
 horizontal_number = 1
 vertical_number = 1
 special_chars = ['Ą', 'Ę', 'Ć', 'Ó', 'Ł', 'Ś', 'Ń', 'Ź', 'Ż', 'Y', 'X', 'V']
-# special_chars = ['ą', 'ę', 'ć', 'ó', 'ł', 'ś', 'ń', 'ź', 'ż']
 buttons = []
 definitions = []
 crossword = 0
 show_definitions = False
-# words_used = {'seks': ['Lorem Ipsum is simply dummy text of the printing and typesetting Lorem Ipsum is simply dummy text of the printing and typesetting', 'Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa dupa', 'seks seks seks']}
 words_used = {}
 words_used_vertical = {}
 loaded = True
@@ -109,19 +107,6 @@ class Button:
             t.start()
             d.start()
         elif self.button_type == 2:
-            # found = False
-            # occupied = get_occupied_boxes(10, 15, 6, True)
-            # print(occupied)
-            # boxx = [14, 15]
-            # leng = is_empty_backwards(input_boxes, boxx[0], boxx[1], False)
-            # print(leng)
-            # while not found:
-            #     word = get_random_word(12).upper()
-            #     print(word)
-            #     if word[-1] == input_boxes[boxx[0]][boxx[1]].secret_text:
-            #         place_word(input_boxes, boxx[0], boxx[1] - len(word) + 1, word, False)
-            #         print('HURRRA! ', word)
-            #         found = True
             debug()
 
 
@@ -155,16 +140,12 @@ class Definition(Button):
         SCREEN.blit(self.btn_img, (self.rect.x + 4, self.rect.y + 4))
 
     def draw_def(self):
-        try:
-            print('draw_def ',self.part1, f'word:{self.word_used}')
-            self.def_surface = DEF_FONT.render(self.part1, True, BLACK)
-            SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
-            self.def_surface = DEF_FONT.render(self.part2, True, BLACK)
-            SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 15))
-            self.def_surface = DEF_FONT.render(self.part3, True, BLACK)
-            SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 27))
-        except AttributeError:
-            self.part1 = 'xxx'
+        self.def_surface = DEF_FONT.render(self.part1, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 2))
+        self.def_surface = DEF_FONT.render(self.part2, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 15))
+        self.def_surface = DEF_FONT.render(self.part3, True, BLACK)
+        SCREEN.blit(self.def_surface, (self.pos_x + 2, self.pos_y + 27))
 
     def wrap_def(self):
         i = 0
@@ -263,21 +244,22 @@ class Box:
                 not_active = [pg.K_RALT, pg.K_RIGHT, pg.K_LEFT, pg.K_DOWN, pg.K_BACKSPACE, pg.K_RETURN,
                               pg.K_UP, pg.K_LALT, pg.K_LCTRL, pg.K_RCTRL, pg.K_RSHIFT, pg.K_LSHIFT, pg.K_SPACE]
                 if self.active:
-                    if event.key == pg.K_RIGHT:
-                        length = random.randint(3, 10)
-                        word = get_word_from_letter(self.row, self.column, length)
-                        if is_empty(input_boxes, self.row, self.column, word, False):
-                            place_word(input_boxes, self.row, self.column, word, False)
-                    elif event.key == pg.K_DOWN:
-                        length = random.randint(3, 10)
-                        word = get_word_from_letter(self.row, self.column, length)
-                        if is_empty(input_boxes, self.row, self.column, word, True):
-                            place_word(input_boxes, self.row, self.column, word, True)
-                    elif event.key == pg.K_UP:
-                        print(is_empty_backwards(input_boxes, self.row, self.column, True))
-                    elif event.key == pg.K_LEFT:
-                        print(is_empty_backwards(input_boxes, self.row, self.column, False))
-                    elif event.key not in not_active and len(self.text) <= 1:
+                    # commented code below is for debugging purposes only
+                    # if event.key == pg.K_RIGHT:
+                    #     length = random.randint(3, 10)
+                    #     word = get_word_from_letter(self.row, self.column, length)
+                    #     if is_empty(input_boxes, self.row, self.column, word, False):
+                    #         place_word(input_boxes, self.row, self.column, word, False)
+                    # elif event.key == pg.K_DOWN:
+                    #     length = random.randint(3, 10)
+                    #     word = get_word_from_letter(self.row, self.column, length)
+                    #     if is_empty(input_boxes, self.row, self.column, word, True):
+                    #         place_word(input_boxes, self.row, self.column, word, True)
+                    # elif event.key == pg.K_UP:
+                    #     print(is_empty_backwards(input_boxes, self.row, self.column, True))
+                    # elif event.key == pg.K_LEFT:
+                    #     print(is_empty_backwards(input_boxes, self.row, self.column, False))
+                    if event.key not in not_active and len(self.text) <= 1:
                         self.text = event.unicode
                         self.active = False
                         self.text = self.text.upper()
@@ -388,7 +370,6 @@ def is_empty(array, row, col, word, is_vertical: bool):
                     z = True if array[row + 1][col + 1].secret_text == '' else False
                     v = True if array[row + 1][col - 1].secret_text == '' else False
                     temp = [x, y, z, v]
-                    # if array[row + 1][col].secret_text == '' and array[row + 1][col].is_dead is False:
                     if all(temp):
                         empty_boxes += 1
                         row += 1
@@ -403,7 +384,6 @@ def is_empty(array, row, col, word, is_vertical: bool):
                     z = True if array[row + 1][col + 1].secret_text == '' else False
                     v = True if array[row - 1][col + 1].secret_text == '' else False
                     temp = [x, y, z, v]
-                    # if array[row][col + 1].secret_text == '' and array[row][col + 1].is_dead is False:
                     if all(temp):
                         empty_boxes += 1
                         col += 1
@@ -505,7 +485,7 @@ def get_random_word(length):
             word = get_word(eval(f'Words.words_{letter}'), length)
     return word
 
-
+# function that generates the first type of crossword, it is activated while pressing the first button
 def crossword_1():
     global crossword
     clear()
@@ -547,7 +527,7 @@ def crossword_1():
     crossword = 1
     update_game_state()
 
-
+# function that generates the second type of crossword, it is activated while pressing the second button
 def crossword_2():
     global crossword
     global special_chars
@@ -567,20 +547,14 @@ def crossword_2():
         first_word = get_random_word(random.randint(6, 15))
         if add_definitions(first_word, z) is True:
             place_word(input_boxes, row, col, first_word, z)
-            print(words_used)
             occupied_boxes = get_occupied_boxes(row, col, len(first_word), z)
             first_placed = True
             if z is True:
                 words_vertical += 1
             else:
                 words_horizontal += 1
-            print(occupied_boxes)
     start_time = time.time()
     while not word_placed:
-        print(len(occupied_boxes))
-        print('missed letters= ',missed_letters)
-        print('words vert= ', words_vertical)
-        print('words hor= ', words_horizontal)
         if time.time() - start_time > 120:
             word_placed = True
             backwards_placed = True
@@ -588,7 +562,6 @@ def crossword_2():
             word_placed = True
         if missed_letters > 8:
             backwards_placed = not backwards_placed
-            print('idziemy backwards')
             while not backwards_placed:
                 occupied_boxes_backwards = occupied_boxes
                 if backwards_words == 1:
@@ -598,18 +571,15 @@ def crossword_2():
                 for box in occupied_boxes_backwards:
                     vert_empty_space = is_empty_backwards(input_boxes, box[0], box[1], True)
                     hor_empty_space = is_empty_backwards(input_boxes, box[0], box[1], False)
-                    print('backwards words=',backwards_words)
                     if vert_empty_space >= 4 or hor_empty_space >= 4:
                         if vert_empty_space > hor_empty_space:
                             if is_empty(input_boxes, box[0], box[1], 'A', True):
-                                print('znalazlo pionowo na', box)
                                 length = vert_empty_space
                                 add_def = True
                             else:
                                 continue
                         if hor_empty_space > vert_empty_space:
                             if is_empty(input_boxes, box[0], box[1], 'A', False):
-                                print('znalazlo poziomo na', box)
                                 length = hor_empty_space
                                 add_def = False
                             else:
@@ -624,8 +594,6 @@ def crossword_2():
                             else:
                                 place_word(input_boxes, box[0], box[1] - len(word) + 1, word, False)
                                 backwards_words += 1
-                    else:
-                        print('nie pasuje nigdzie')
                 break
             missed_letters = 0
             backwards_words = 0
@@ -636,12 +604,7 @@ def crossword_2():
                 continue
             else:
                 word = get_word_from_letter(box[0], box[1], random.randint(5, 12))
-                print(word, box)
-                print(missed_letters)
-                print('poziomo: ',is_empty(input_boxes, box[0], box[1], word, False))
-                print('pionowo: ',is_empty(input_boxes, box[0], box[1], word, True))
                 if is_empty(input_boxes, box[0], box[1], word, False) is True:
-                    print(f'weszlo na {box[0], box[1]} poziomo')
                     if add_definitions(word, False) is True:
                         place_word(input_boxes, box[0], box[1], word, False)
                         missed_letters = 0
@@ -650,9 +613,7 @@ def crossword_2():
                         for i in temp:
                             occupied_boxes.append(i)
 
-                    # word_placed = True
                 elif is_empty(input_boxes, box[0], box[1], word, True) is True:
-                    print(f'weszlo na {box[0], box[1]} pionowo')
                     if add_definitions(word, True) is True:
                         place_word(input_boxes, box[0], box[1], word, True)
                         missed_letters = 0
@@ -662,11 +623,8 @@ def crossword_2():
                             occupied_boxes.append(i)
 
                 else:
-                    print('nie pasuje nigdzie?!')
                     missed_letters += 1
-                # word_placed = True
-            print(occupied_boxes)
-    # while not word_placed:
+
     for i in range(len(input_boxes)):
         for box in input_boxes[i]:
             if box.secret_text == '':
@@ -794,10 +752,33 @@ def debug():
             box.reveal_text()
 
 
+def welcome():
+    line_1 = 'Welcome to Crosswords Game!'
+    line_2 = 'If you click first or second button, a crossword in polish language '
+    line_3 = 'will be generated for you!'
+    line_4 = 'As text on each button indicate, there are two types of crosswords:'
+    line_5 = 'In the first one, the final word (gold boxes) will be randomly '
+    line_6 = 'chosen and your job will be to guess all the horizontal words.'
+    line_7 = 'In the second one, there is no final word, just words that well...'
+    line_8 = 'cross with each other.'
+    line_9 = 'After you generate a crossword, you can click the \'Show answers\''
+    line_10 = 'button if you feel like cheating :)'
+    line_11 = 'Good luck!'
+    lines = []
+    line_spacing = 50
+    for line_number in range(1, 11):
+        lines.append(eval(f'line_{line_number}'))
+    for line in lines:
+        line_surface = FONT.render(line, True, BLACK)
+        SCREEN.blit(line_surface, (850, line_spacing))
+        line_spacing += 30
+
+
 def main():
     clock = pg.time.Clock()
     draw_grid(20, 20)
     done = False
+    welcome()
 
     while not done:
         if loaded is False:
