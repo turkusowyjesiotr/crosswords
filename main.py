@@ -47,6 +47,8 @@ debug_mode = False
 moving_sprites = pg.sprite.Group()
 loading_icon = hourglass.Hourglass(1300, 400)
 moving_sprites.add(loading_icon)
+img = pg.image.load('assets/images/load.png')
+img = pg.transform.smoothscale(img, (23, 23)).convert_alpha()
 
 
 class Button:
@@ -107,6 +109,19 @@ class Button:
             t.start()
             d.start()
         elif self.button_type == 2:
+            # found = False
+            # occupied = get_occupied_boxes(10, 15, 6, True)
+            # print(occupied)
+            # boxx = [14, 15]
+            # leng = is_empty_backwards(input_boxes, boxx[0], boxx[1], False)
+            # print(leng)
+            # while not found:
+            #     word = get_random_word(12).upper()
+            #     print(word)
+            #     if word[-1] == input_boxes[boxx[0]][boxx[1]].secret_text:
+            #         place_word(input_boxes, boxx[0], boxx[1] - len(word) + 1, word, False)
+            #         print('HURRRA! ', word)
+            #         found = True
             debug()
 
 
@@ -114,8 +129,6 @@ class Definition(Button):
     def __init__(self, x, y, width, height, elevation, number, word_used, words_dict, text='', button_type=4):
         # button
         super().__init__(x, y, width, height, elevation, text, button_type)
-        img = pg.image.load('assets/images/load.png')
-        img = pg.transform.smoothscale(img, (23, 23)).convert_alpha()
         self.btn_img = img
 
         # definition
@@ -260,6 +273,10 @@ class Box:
                         word = get_word_from_letter(self.row, self.column, length)
                         if is_empty(input_boxes, self.row, self.column, word, True):
                             place_word(input_boxes, self.row, self.column, word, True)
+                    elif event.key == pg.K_UP:
+                        print(is_empty_backwards(input_boxes, self.row, self.column, True))
+                    elif event.key == pg.K_LEFT:
+                        print(is_empty_backwards(input_boxes, self.row, self.column, False))
                     elif event.key not in not_active and len(self.text) <= 1:
                         self.text = event.unicode
                         self.active = False
@@ -396,6 +413,47 @@ def is_empty(array, row, col, word, is_vertical: bool):
                         return False
 
 
+def is_empty_backwards(array, row, col, is_vertical: bool):
+    length = 0
+    counted = False
+    if is_vertical:
+        while not counted:
+            if row == 0:
+                return length
+            try:
+                x = True if array[row - 1][col].secret_text == '' else False
+                y = True if array[row - 1][col].is_dead is False else False
+                z = True if array[row - 1][col + 1].secret_text == '' else False
+                v = True if array[row - 1][col - 1].secret_text == '' else False
+                temp = [x, y, z, v]
+                if all(temp):
+                    length += 1
+                    row -= 1
+                else:
+                    break
+            except IndexError:
+                break
+        return length
+    if not is_vertical:
+        while not counted:
+            if col == 0:
+                return length
+            try:
+                x = True if array[row][col - 1].secret_text == '' else False
+                y = True if array[row][col - 1].is_dead is False else False
+                z = True if array[row + 1][col - 1].secret_text == '' else False
+                v = True if array[row - 1][col - 1].secret_text == '' else False
+                temp = [x, y, z, v]
+                if all(temp):
+                    length += 1
+                    col -= 1
+                else:
+                    break
+            except IndexError:
+                break
+        return length
+
+
 def get_word(array, length):
     array_sorted = sorted(array, key=len)
     found = False
@@ -489,7 +547,7 @@ def crossword_1():
     crossword = 1
     update_game_state()
 
-# TODO: BURDEL TEN NAPRAWIC XD
+
 def crossword_2():
     global crossword
     global special_chars
@@ -497,52 +555,122 @@ def crossword_2():
     first_placed = False
     word_placed = False
     occupied_boxes = []
+    words_horizontal = 0
+    words_vertical = 0
+    missed_letters = 0
+    backwards_words = 0
+    backwards_placed = False
     while not first_placed:
         row = random.randint(0, 1)
         col = random.randint(0, 1)
         z = bool(random.getrandbits(1))
-        z = True
         first_word = get_random_word(random.randint(6, 15))
         if add_definitions(first_word, z) is True:
             place_word(input_boxes, row, col, first_word, z)
             print(words_used)
             occupied_boxes = get_occupied_boxes(row, col, len(first_word), z)
             first_placed = True
+            if z is True:
+                words_vertical += 1
+            else:
+                words_horizontal += 1
             print(occupied_boxes)
+    start_time = time.time()
     while not word_placed:
         print(len(occupied_boxes))
-        box = random.choice(occupied_boxes)
-        print('box=',box)
-        if input_boxes[box[0]][box[1]].secret_text not in special_chars:
-            word = get_word_from_letter(box[0], box[1], random.randint(4, 10))
-            print(box)
-            print(word)
-            time.sleep(0.1)
-            print('poziomo: ',is_empty(input_boxes, box[0], box[1], word, False))
-            print('pionowo: ',is_empty(input_boxes, box[0], box[1], word, True))
-            if is_empty(input_boxes, box[0], box[1], word, False) is True:
-                print(f'weszlo na {box[0], box[1]} poziomo')
-                if add_definitions(word, False) is True:
-                    place_word(input_boxes, box[0], box[1], word, False)
-                    temp = get_occupied_boxes(box[0], box[1], len(word), False)
-                    for i in temp:
-                        occupied_boxes.append(i)
+        print('missed letters= ',missed_letters)
+        print('words vert= ', words_vertical)
+        print('words hor= ', words_horizontal)
+        if time.time() - start_time > 120:
+            word_placed = True
+            backwards_placed = True
+        if words_horizontal == 15 and words_vertical == 15:
+            word_placed = True
+        if missed_letters > 8:
+            backwards_placed = not backwards_placed
+            print('idziemy backwards')
+            while not backwards_placed:
+                occupied_boxes_backwards = occupied_boxes
+                if backwards_words == 1:
+                    backwards_placed = True
+                    break
 
-                # word_placed = True
-            if is_empty(input_boxes, box[0], box[1], word, True) is True:
-                print(f'weszlo na {box[0], box[1]} pionowo')
-                if add_definitions(word, True) is True:
-                    place_word(input_boxes, box[0], box[1], word, True)
-                    temp = get_occupied_boxes(box[0], box[1], len(word), True)
-                    for i in temp:
-                        occupied_boxes.append(i)
+                for box in occupied_boxes_backwards:
+                    vert_empty_space = is_empty_backwards(input_boxes, box[0], box[1], True)
+                    hor_empty_space = is_empty_backwards(input_boxes, box[0], box[1], False)
+                    print('backwards words=',backwards_words)
+                    if vert_empty_space >= 4 or hor_empty_space >= 4:
+                        if vert_empty_space > hor_empty_space:
+                            if is_empty(input_boxes, box[0], box[1], 'A', True):
+                                print('znalazlo pionowo na', box)
+                                length = vert_empty_space
+                                add_def = True
+                            else:
+                                continue
+                        if hor_empty_space > vert_empty_space:
+                            if is_empty(input_boxes, box[0], box[1], 'A', False):
+                                print('znalazlo poziomo na', box)
+                                length = hor_empty_space
+                                add_def = False
+                            else:
+                                continue
 
+                        word = get_random_word(random.randint(4, length)).upper()
+                        if word[-1] == input_boxes[box[0]][box[1]].secret_text and add_definitions(word, add_def):
+                            if vert_empty_space > hor_empty_space:
+                                place_word(input_boxes, box[0] - len(word) + 1, box[1], word, True)
+                                backwards_words += 1
+
+                            else:
+                                place_word(input_boxes, box[0], box[1] - len(word) + 1, word, False)
+                                backwards_words += 1
+                    else:
+                        print('nie pasuje nigdzie')
+                break
+            missed_letters = 0
+            backwards_words = 0
+
+        else:
+            box = random.choice(occupied_boxes)
+            if input_boxes[box[0]][box[1]].secret_text in special_chars:
+                continue
             else:
-                print('nie pasuje nigdzie?!')
-            # word_placed = True
-        print(occupied_boxes)
-    # while not word_placed:
+                word = get_word_from_letter(box[0], box[1], random.randint(5, 12))
+                print(word, box)
+                print(missed_letters)
+                print('poziomo: ',is_empty(input_boxes, box[0], box[1], word, False))
+                print('pionowo: ',is_empty(input_boxes, box[0], box[1], word, True))
+                if is_empty(input_boxes, box[0], box[1], word, False) is True:
+                    print(f'weszlo na {box[0], box[1]} poziomo')
+                    if add_definitions(word, False) is True:
+                        place_word(input_boxes, box[0], box[1], word, False)
+                        missed_letters = 0
+                        words_horizontal += 1
+                        temp = get_occupied_boxes(box[0], box[1], len(word), False)
+                        for i in temp:
+                            occupied_boxes.append(i)
 
+                    # word_placed = True
+                elif is_empty(input_boxes, box[0], box[1], word, True) is True:
+                    print(f'weszlo na {box[0], box[1]} pionowo')
+                    if add_definitions(word, True) is True:
+                        place_word(input_boxes, box[0], box[1], word, True)
+                        missed_letters = 0
+                        words_vertical += 1
+                        temp = get_occupied_boxes(box[0], box[1], len(word), True)
+                        for i in temp:
+                            occupied_boxes.append(i)
+
+                else:
+                    print('nie pasuje nigdzie?!')
+                    missed_letters += 1
+                # word_placed = True
+            print(occupied_boxes)
+    # while not word_placed:
+    for i in range(len(input_boxes)):
+        for box in input_boxes[i]:
+            if box.secret_text == '':
+                box.is_dead = True
     draw_definitions()
     loading(False)
     crossword = 2
@@ -550,17 +678,14 @@ def crossword_2():
 
 
 def get_occupied_boxes(row, col, length, is_vertical):
-    occupied_boxes = []
     coords = []
     if is_vertical:
-        for i in range(length):
+        for i in range(1, length):
             coords.append([row + i, col])
-        # occupied_boxes.append(coords)
         return coords
     if not is_vertical:
-        for i in range(length):
+        for i in range(1, length):
             coords.append([row, col + i])
-        # occupied_boxes.append(coords)
         return coords
 
 
