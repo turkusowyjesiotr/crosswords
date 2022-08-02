@@ -49,10 +49,8 @@ You can clone this repository or download .zip file and run main.py from IDE. Py
 
 ## Project Status
 Project is: _complete-ish_, it works and I am fine with it, but I want to expand it in the future.
-## Room for Improvement
-Include areas you believe need improvement / could be improved. Also add TODOs for future development.
 
-Room for improvement:
+## Room for Improvement
 - algorithm that generates crossword could be improved to make them more dense
 - speed could be improved with more use of threading
 - aesthetics could be REALLY improved
