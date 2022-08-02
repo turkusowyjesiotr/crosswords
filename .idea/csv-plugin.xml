@@ -3,14 +3,7 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\special_chars.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\words.csv">
+        <entry key="\assets\words\words.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

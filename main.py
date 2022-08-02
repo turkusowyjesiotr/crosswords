@@ -466,7 +466,6 @@ def get_word_special_chars(letter):
 
 def get_word_from_letter(row, column, length):
     letter = input_boxes[row][column].secret_text
-    print(letter)
     global special_chars
     if letter in special_chars:
         return False
